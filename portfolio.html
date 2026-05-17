@@ -1,1 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Erick Gutierrez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #000;
+    --muted: #3a3a3a;
+    --soft: #666;
+    --light: #bbb;
+    --white: #fff;
+    --admin: #9a7c58;
+    --gap: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: normal;
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ═══════════════════════════════════════
+     MOBILE LAYOUT
+  ═══════════════════════════════════════ */
+
+  /* ── LEFT STRIP ──
+     Fixed so it always renders above the fixed drawer panel.
+     Right column compensates with margin-left.
+  ── */
+  .left-strip {
+    width: 56px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1.6rem 0 calc(4.5rem + env(safe-area-inset-bottom)) 1rem;
+    z-index: 40;
+    overflow: visible;
+    /* Solid background so panel behind never bleeds through to name/hamburger */
+    background: var(--bg);
+  }
+
+  /* Compensate for fixed left-strip */
+  .shell {
+    display: flex;
+    min-height: 100vh;
+    padding-left: 56px;
+  }
+
+  .right-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .site-name-vertical {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--white);
+    white-space: nowrap;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  /* bottom anchor for the floating cat panel */
+  .left-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    width: 100%;
+    position: relative;
+  }
+
+  /* ── FLOATING CAT PANEL ──
+     Absolutely positioned above the hamburger.
+     Grows from width:0 → target width (left → right).
+     Never affects layout — floats above everything.
+  ── */
+  /* ── MOBILE DRAWER PANEL ──
+     Starts at left edge of photo column (56px = left-strip width).
+     Slides right. z-index below left-strip (40). */
+  .mobile-drawer-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 56px;
+    width: 0;
+    background: var(--bg);
+    z-index: 18;
+    overflow: hidden;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  .mobile-drawer-panel.open {
+    width: var(--drawer-w, 120px);
+  }
+
+  /* ── CATEGORY TEXT (fades up, sits above panel) ── */
+  .mobile-cats {
+    position: absolute;
+    bottom: calc(100% + 1.6rem);
+    left: 0;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    pointer-events: none;
+    z-index: 30;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mobile-cats.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .cat-btn {
+    background: transparent; border: none; text-align: left;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--soft);
+    cursor: pointer;
+    padding: 0.28rem 0;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: color 0.2s;
+    line-height: 1.2;
+    pointer-events: none;
+  }
+  .cat-btn.active { color: var(--white); }
+  .cat-btn:hover  { color: var(--white); }
+  @keyframes catUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* Hamburger */
+  .left-hamburger {
+    background: transparent; border: none;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    gap: 5px; cursor: pointer; padding: 0;
+    width: 28px; flex-shrink: 0;
+    position: relative; z-index: 25;
+  }
+  .left-hamburger span {
+    display: block; height: 1.5px; background: var(--white);
+    transition: width 0.2s, transform 0.2s ease, opacity 0.15s;
+    transform-origin: left center;
+  }
+  .left-hamburger span:nth-child(1) { width: 22px; }
+  .left-hamburger span:nth-child(2) { width: 14px; }
+  .left-hamburger span:nth-child(3) { width: 18px; }
+  .left-hamburger:hover span        { width: 22px; }
+  .left-hamburger.open span:nth-child(1) { width: 20px; transform: translateY(6.5px) rotate(45deg); }
+  .left-hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
+  .left-hamburger.open span:nth-child(3) { width: 20px; transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* ── ADMIN BAR ── */
+  .admin-bar {
+    display: none;
+    padding: 5px 0.8rem 5px 0;
+    font-size: 0.64rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--admin); align-items: center; justify-content: space-between;
+  }
+  .admin-bar.visible { display: flex; }
+  .admin-lock {
+    background: transparent; border: none; color: var(--admin);
+    font-family: 'Cormorant Garamond', serif; font-size: 0.64rem;
+    letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; padding: 0;
+  }
+
+  /* ── FEED ── */
+  .feed {
+    flex: 1;
+    padding: 1.2rem 0.8rem 3rem 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap);
+    align-content: start;
+  }
+
+  /* Menu open: snap to 1 col, lock card width so photos don't stretch.
+     The smooth effect comes from each card's transform animation in JS. */
+  .feed.menu-open {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .feed.menu-open .photo-card {
+    max-width: var(--card-w, 100%);
+    justify-self: end;
+  }
+
+  /* Smooth card slide transition — applied to all cards so they
+     animate in/out of position. JS sets transform before class change. */
+  .photo-card {
+    transition: transform 0.8s cubic-bezier(0.4,0,0.2,1),
+                opacity 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── PHOTO CARD ── */
+  .photo-card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    cursor: pointer;
+    background: #0a0a0a;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: rise 0.4s ease forwards;
+  }
+  .photo-card:nth-child(1)  { animation-delay:.03s }
+  .photo-card:nth-child(2)  { animation-delay:.07s }
+  .photo-card:nth-child(3)  { animation-delay:.12s }
+  .photo-card:nth-child(4)  { animation-delay:.17s }
+  .photo-card:nth-child(5)  { animation-delay:.22s }
+  .photo-card:nth-child(6)  { animation-delay:.27s }
+  .photo-card:nth-child(7)  { animation-delay:.32s }
+  .photo-card:nth-child(8)  { animation-delay:.37s }
+  .photo-card:nth-child(9)  { animation-delay:.42s }
+  .photo-card:nth-child(10) { animation-delay:.47s }
+  .photo-card:nth-child(11) { animation-delay:.52s }
+  .photo-card:nth-child(12) { animation-delay:.57s }
+  @keyframes rise { to { opacity:1; transform:translateY(0); } }
+
+  .photo-card img, .photo-card .swatch {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    filter: contrast(1.08) brightness(0.88) saturate(0.6);
+    transition: filter 0.3s;
+  }
+  .photo-card:hover img, .photo-card:hover .swatch {
+    filter: contrast(1.1) brightness(0.96) saturate(0.65);
+  }
+  .photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 55%);
+    opacity: 0; transition: opacity 0.25s;
+    display: flex; align-items: flex-end;
+    padding: 10px; pointer-events: none;
+  }
+  .photo-card:hover .photo-overlay { opacity: 1; }
+  .photo-caption {
+    font-size: 0.7rem; color: var(--white);
+    font-weight: 300; letter-spacing: 0.07em; line-height: 1.35;
+  }
+
+  /* Admin overlay */
+  .admin-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.92); flex-direction: column;
+    align-items: stretch; justify-content: flex-end;
+    padding: 10px; gap: 6px; z-index: 10;
+  }
+  .admin-mode .photo-card .admin-overlay { display: flex; }
+  .admin-mode .photo-card { cursor: default; }
+  .admin-caption-input {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white); font-family: 'Cormorant Garamond', serif;
+    font-size: 0.8rem; letter-spacing: 0.04em;
+    padding: 5px 8px; width: 100%; outline: none;
+  }
+  .admin-caption-input::placeholder { color: var(--muted); }
+  .admin-cat-select {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    color: var(--light); font-family: 'Cormorant Garamond', serif;
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 5px 8px; width: 100%; outline: none; appearance: none; cursor: pointer;
+  }
+  .admin-cat-select option { background: #0a0a0a; }
+  .admin-save-btn {
+    background: rgba(154,124,88,0.15); border: 1px solid rgba(154,124,88,0.3);
+    color: var(--admin); font-family: 'Cormorant Garamond', serif;
+    font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 5px 8px; cursor: pointer; width: 100%;
+  }
+  .photo-card.hidden { display: none; }
+
+  /* Cover overlay — fixed left strip, covers full page height including scroll.
+     Sits above scrolled content (footer, upload) but below the sticky left strip. */
+  .left-strip-cover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 56px;
+    height: 100%;
+    min-height: 100vh;
+    background: var(--bg);
+    z-index: 19;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .left-strip-cover.active {
+    opacity: 1;
+  }
+  .site-footer {
+    padding: 0.8rem 0.8rem 2rem 0;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-yr   { font-size: 0.64rem; color: var(--muted); letter-spacing: 0.06em; }
+  /* When mobile menu open, push footer and upload behind the cover */
+  body.menu-open .upload-area,
+  body.menu-open .site-footer {
+    position: relative;
+    z-index: 0;
+  }
+  .upload-area { padding: 0.8rem 0.8rem 0.4rem 0; }
+  .upload-label {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: var(--muted); font-size: 0.66rem; letter-spacing: 0.2em;
+    text-transform: uppercase; cursor: pointer; transition: color 0.2s;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .upload-label:hover { color: var(--soft); }
+  #file-input { display: none; }
+
+  /* ═══════════════════════════════════════
+     DESKTOP OVERRIDES
+  ═══════════════════════════════════════ */
+  @media (min-width: 768px) {
+    .shell { padding-left: 160px; }
+    .left-strip {
+      width: 160px !important;
+      padding: 2rem 0 2.5rem 2rem;
+    }
+    .site-name-vertical { font-size: 0.78rem; letter-spacing: 0.28em; }
+    /* Panel starts at right edge of desktop left-strip */
+    .mobile-drawer-panel { left: 160px !important; }
+    .feed {
+      padding: 1.6rem 3rem 4rem 0; gap: 16px;
+    }
+    .feed.menu-open {
+      grid-template-columns: repeat(1, 1fr) !important;
+    }
+    .feed.menu-open .photo-card {
+      max-width: var(--card-w, 100%) !important;
+      justify-self: end !important;
+    }
+    .photo-card { aspect-ratio: 1 / 1; }
+    .admin-bar   { padding: 5px 3rem 5px 0; }
+    .upload-area { padding: 1.2rem 3rem 0.6rem 0; }
+    .site-footer { padding: 0.8rem 3rem 2.5rem 0; }
+  }
+  @media (min-width: 1100px) {
+    .shell { padding-left: 200px; }
+    .left-strip { width: 200px !important; padding: 2.4rem 0 3rem 2.4rem; }
+    .mobile-drawer-panel { left: 200px !important; }
+    .feed { padding: 2rem 4rem 5rem 0; gap: 20px; }
+    .admin-bar   { padding: 5px 4rem 5px 0; }
+    .upload-area { padding: 1.4rem 4rem 0.8rem 0; }
+    .site-footer { padding: 1rem 4rem 3rem 0; }
+  }
+
+  /* ═══════════════════════════════════════
+     LIGHTBOX
+  ═══════════════════════════════════════ */
+  .lightbox {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: #000; flex-direction: column;
+    align-items: center; justify-content: center;
+    touch-action: none;
+  }
+  .lightbox.open { display: flex; }
+  .lb-track {
+    flex: 1; width: 100%; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    padding-top: 3rem;
+  }
+  .lb-slide {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 1.5rem;
+  }
+  .lb-slide img {
+    max-width: 100%; max-height: 100%; display: block;
+    filter: contrast(1.1) brightness(0.92) saturate(0.65);
+    object-fit: contain; pointer-events: none; user-select: none;
+  }
+  .lb-slide .lb-swatch {
+    width: 100%; max-width: 680px; min-height: 50vw; pointer-events: none;
+  }
+  .lb-bottom {
+    width: 100%; max-width: 680px;
+    padding: 0.8rem 1.6rem 2.4rem;
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem; flex-shrink: 0;
+  }
+  .lb-caption { font-size: 0.9rem; font-weight: 300; color: var(--light); letter-spacing: 0.07em; }
+  .lb-date    { font-size: 0.66rem; letter-spacing: 0.16em; color: var(--muted); margin-top: 3px; text-transform: uppercase; }
+  .lb-nav { display: flex; gap: 10px; flex-shrink: 0; }
+  .lb-arrow {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid #222; background: transparent;
+    color: var(--soft); font-size: 0.95rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .lb-arrow:hover { border-color: var(--soft); color: var(--white); }
+  .lb-close {
+    position: absolute; top: 1.2rem; right: 1.4rem;
+    background: transparent; border: none;
+    color: var(--soft); font-size: 1.2rem; cursor: pointer;
+    transition: color 0.2s; z-index: 10;
+  }
+  .lb-close:hover { color: var(--white); }
+
+  /* ═══════════════════════════════════════
+     PASSWORD MODAL
+  ═══════════════════════════════════════ */
+  .pw-modal {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.96); align-items: center; justify-content: center;
+  }
+  .pw-modal.open { display: flex; }
+  .pw-box { background: #080808; padding: 2rem 1.8rem; width: 88vw; max-width: 300px; }
+  .pw-title { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem; }
+  .pw-input {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid #222; color: var(--white);
+    font-family: 'Cormorant Garamond', serif; font-size: 1rem;
+    padding: 8px 0; outline: none; letter-spacing: 0.08em; transition: border-color 0.2s;
+  }
+  .pw-input:focus { border-bottom-color: var(--soft); }
+  .pw-input.error { border-bottom-color: #7a2020; }
+  .pw-error { font-size: 0.68rem; color: #8a3030; margin-top: 0.5rem; letter-spacing: 0.08em; min-height: 1rem; }
+  .pw-actions { display: flex; gap: 10px; margin-top: 1.4rem; }
+  .pw-btn {
+    flex: 1; padding: 8px; background: transparent; border: none;
+    border-bottom: 1px solid #222;
+    font-family: 'Cormorant Garamond', serif; font-size: 0.78rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    cursor: pointer; color: var(--soft); transition: color 0.2s;
+  }
+  .pw-btn:hover { color: var(--white); }
+  .pw-btn.primary { color: var(--admin); border-bottom-color: rgba(154,124,88,0.3); }
+  .pw-btn.primary:hover { color: var(--white); }
+</style>
+</head>
+<body>
+
+<div class="left-strip-cover" id="left-strip-cover"></div>
+<div class="shell">
+
+  <!-- LEFT STRIP — contains name, cats, hamburger all in flow -->
+  <div class="left-strip" id="left-strip">
+    <!-- Name doubles as secret admin trigger — 5 quick taps -->
+    <span class="site-name-vertical" id="secret-trigger">Erick Gutierrez</span>
+
+    <div class="left-bottom">
+      <!-- Black sliding panel — starts at left edge of photo column -->
+      <div class="mobile-drawer-panel" id="mobile-drawer-panel"></div>
+
+      <!-- Category text — fades up above hamburger -->
+      <div class="mobile-cats" id="mobile-cats">
+        <button class="cat-btn active" data-cat="all">All</button>
+        <button class="cat-btn" data-cat="street">Street</button>
+        <button class="cat-btn" data-cat="night">Night</button>
+        <button class="cat-btn" data-cat="detail">Details</button>
+        <button class="cat-btn" data-cat="people">People</button>
+        <!-- Hidden — only visible in admin mode -->
+        <button class="cat-btn admin-exit-btn" id="admin-cat-btn" style="display:none;">Exit Admin</button>
+      </div>
+
+      <button class="left-hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT CONTENT -->
+  <div class="right-col">
+
+    <div class="admin-bar" id="admin-bar">
+      <span>Admin Mode</span>
+      <button class="admin-lock" id="admin-lock">Lock</button>
+    </div>
+
+    <main class="feed" id="gallery">
+
+      <div class="photo-card" data-cat="street" data-caption="somewhere between a and b" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(160deg,#1a1a1a,#2e2e2e,#111);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">somewhere between a and b</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="somewhere between a and b">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="night">Night</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="night" data-caption="neon on wet pavement" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(135deg,#0d0d1a,#1a1528,#0a0a12);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">neon on wet pavement</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="neon on wet pavement">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night" selected>Night</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="people" data-caption="caught looking" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(160deg,#1c1c1c,#2c2c2c,#181818);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">caught looking</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="caught looking">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night">Night</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="detail" data-caption="worn edges" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(180deg,#222,#333,#1a1a1a);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">worn edges</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="worn edges">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night">Night</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="night" data-caption="3am, no reason to be out" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(155deg,#0a0a0a,#151520,#080810);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">3am, no reason to be out</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="3am, no reason to be out">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night" selected>Night</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="street" data-caption="the city never waits" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(165deg,#1e1e1e,#2a2a2a,#141414);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">the city never waits</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="the city never waits">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="night">Night</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="detail" data-caption="light through a crack" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(140deg,#181818,#282818,#101008);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">light through a crack</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="light through a crack">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night">Night</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="people" data-caption="everyone going somewhere" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(170deg,#161616,#242424,#0e0e0e);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">everyone going somewhere</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="everyone going somewhere">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night">Night</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="street" data-caption="same block, first time seeing it" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(155deg,#1a1a14,#28281c,#0e0e08);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">same block, first time seeing it</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="same block, first time seeing it">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="night">Night</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="night" data-caption="after closing time" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(135deg,#0c0c10,#14141e,#080810);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">after closing time</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="after closing time">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night" selected>Night</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="detail" data-caption="texture tells a story" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(160deg,#202020,#303030,#181818);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">texture tells a story</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="texture tells a story">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night">Night</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card" data-cat="people" data-caption="she didn't notice me" data-date="2024">
+        <div class="swatch" style="background:linear-gradient(165deg,#1a1a1a,#262626,#121212);width:100%;height:100%;"></div>
+        <div class="photo-overlay"><span class="photo-caption">she didn't notice me</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="she didn't notice me">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="night">Night</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+    </main>
+
+    <div class="upload-area">
+      <label class="upload-label" for="file-input">+ Add Photos</label>
+      <input type="file" id="file-input" accept="image/*" multiple>
+    </div>
+
+    <footer class="site-footer">
+      <span class="footer-yr">2024 — 25</span>
+    </footer>
+
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+  <button class="lb-close" id="lb-close">✕</button>
+  <div class="lb-track">
+    <div class="lb-slide" id="lb-slide"></div>
+  </div>
+  <div class="lb-bottom">
+    <div>
+      <p class="lb-caption" id="lb-cap"></p>
+      <p class="lb-date"    id="lb-date"></p>
+    </div>
+    <div class="lb-nav">
+      <button class="lb-arrow" id="lb-prev">←</button>
+      <button class="lb-arrow" id="lb-next">→</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password modal -->
+<div class="pw-modal" id="pw-modal" role="dialog" aria-modal="true">
+  <div class="pw-box">
+    <p class="pw-title">Admin Access</p>
+    <input class="pw-input" id="pw-input" type="password" placeholder="Password" autocomplete="off" spellcheck="false">
+    <p class="pw-error" id="pw-error"></p>
+    <div class="pw-actions">
+      <button class="pw-btn" id="pw-cancel">Cancel</button>
+      <button class="pw-btn primary" id="pw-confirm">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+const PASS_HASH = '1327816492da6cae9606b0eedd6b61222f73349d37ffac38e5c66938fcd9e872';
+
+let adminMode = false, failCount = 0, lockUntil = 0, adminTimer = null;
+let menuOpen  = false;
+const ADMIN_TIMEOUT = 5 * 60 * 1000, LOCK_DURATION = 30 * 1000;
+const isMobile = () => window.innerWidth < 768;
+
+const hamburger  = document.getElementById('hamburger');
+const mobileCats = document.getElementById('mobile-cats');
+const catBtns    = [...document.querySelectorAll('.cat-btn')];
+const feed       = document.getElementById('gallery');
+const gallery    = feed;
+
+const cover       = document.getElementById('left-strip-cover');
+const drawerPanel = document.getElementById('mobile-drawer-panel');
+let closeTimer = null;
+
+// Measure one card width before grid changes so photos don't stretch
+function measureCardWidth() {
+  const card = feed.querySelector('.photo-card:not(.hidden)');
+  if (card) {
+    document.documentElement.style.setProperty('--card-w', card.getBoundingClientRect().width + 'px');
+  }
+}
+
+// Measure drawer panel target width = 75% of one photo column
+function measureDrawerWidth() {
+  const card = feed.querySelector('.photo-card:not(.hidden)');
+  const colW = card ? card.getBoundingClientRect().width : (feed.getBoundingClientRect().width / 2);
+  document.documentElement.style.setProperty('--drawer-w', Math.round(colW * 0.75) + 'px');
+}
+
+// ── OPEN ──
+function openMobileMenu() {
+  if (menuOpen) return;
+  menuOpen = true;
+
+  // Cancel any pending close cleanup
+  if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+
+  // Measure before grid changes
+  measureCardWidth();
+  measureDrawerWidth();
+
+  // Pre-position left-col cards off to the right before grid snaps to 1-col
+  // so they appear to slide in from the right side
+  const allCards = [...feed.querySelectorAll('.photo-card:not(.hidden)')];
+  allCards.forEach((card, i) => {
+    if (i % 2 === 0) {
+      // Left column cards (even index in visible list = odd nth-child)
+      // Start them offset to the right so they slide into position
+      card.style.transition = 'none';
+      card.style.transform  = 'translateX(100%)';
+    }
+  });
+
+  // Let the pre-position apply, then snap grid and animate
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      hamburger.classList.add('open');
+      cover.classList.add('active');
+      document.body.classList.add('menu-open');
+      drawerPanel.classList.add('open');
+      feed.classList.add('menu-open');
+      mobileCats.classList.add('open');
+
+      // Now animate all cards to their natural position
+      allCards.forEach(card => {
+        card.style.transition = '';
+        card.style.transform  = '';
+      });
+
+      // Stagger cats bottom→top
+      catBtns.forEach(btn => {
+        btn.style.transition    = '';
+        btn.style.animation     = 'none';
+        btn.style.opacity       = '0';
+        btn.style.transform     = 'translateY(8px)';
+        btn.style.pointerEvents = 'none';
+      });
+      requestAnimationFrame(() => {
+        const n = catBtns.length;
+        catBtns.forEach((btn, i) => {
+          const delay = 0.2 + (n - 1 - i) * 0.09;
+          btn.style.animation     = `catUp 0.5s cubic-bezier(0.4,0,0.2,1) ${delay}s forwards`;
+          btn.style.pointerEvents = 'auto';
+        });
+      });
+    });
+  });
+}
+
+// ── CLOSE ──
+function closeMobileMenu(fast) {
+  if (!menuOpen) return;
+  menuOpen = false;
+
+  hamburger.classList.remove('open');
+  cover.classList.remove('active');
+  document.body.classList.remove('menu-open');
+
+  // Collapse black panel
+  drawerPanel.classList.remove('open');
+  // Restore 2-col grid and clear any leftover card transforms
+  feed.classList.remove('menu-open');
+  [...feed.querySelectorAll('.photo-card')].forEach(card => {
+    card.style.transition = '';
+    card.style.transform  = '';
+  });
+  // Fade category panel out
+  mobileCats.classList.remove('open');
+
+  // Fade cat text out
+  const dur = fast ? '0.12s' : '0.8s';
+  catBtns.forEach(btn => {
+    btn.style.pointerEvents = 'none';
+    btn.style.animation     = 'none';
+    btn.style.transition    = `opacity ${dur} cubic-bezier(0.4,0,0.2,1), transform ${dur} cubic-bezier(0.4,0,0.2,1)`;
+    btn.style.opacity       = '0';
+    btn.style.transform     = 'translateY(6px)';
+  });
+
+  // After fade, wipe inline styles so next open is clean
+  const clearMs = fast ? 150 : 820;
+  closeTimer = setTimeout(() => {
+    if (!menuOpen) {
+      catBtns.forEach(btn => {
+        btn.style.transition = '';
+        btn.style.animation  = '';
+      });
+    }
+    closeTimer = null;
+  }, clearMs);
+}
+
+// ── HAMBURGER — toggle on all screen sizes ──
+hamburger.addEventListener('click', () => {
+  menuOpen ? closeMobileMenu(false) : openMobileMenu();
+});
+
+// ── CAT SELECTION — only filter, menu stays open ──
+mobileCats.addEventListener('click', e => {
+  const btn = e.target.closest('.cat-btn');
+  if (!btn || btn.id === 'admin-cat-btn') return;
+  syncCatUI(btn.dataset.cat);
+});
+
+// ── FILTER ──
+const currentCat = { value: 'all' };
+function applyFilter() {
+  document.querySelectorAll('.photo-card').forEach(c => {
+    c.classList.toggle('hidden', currentCat.value !== 'all' && c.dataset.cat !== currentCat.value);
+  });
+}
+function syncCatUI(cat) {
+  currentCat.value = cat;
+  catBtns.forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  applyFilter();
+}
+
+// ── SECRET ADMIN TRIGGER — tap name 5 times within 2 seconds ──
+let secretTaps = 0, secretTimer = null;
+document.getElementById('secret-trigger').addEventListener('click', () => {
+  secretTaps++;
+  clearTimeout(secretTimer);
+  if (secretTaps >= 5) {
+    secretTaps = 0;
+    if (adminMode) { lockAdmin(); return; }
+    openPwModal();
+    return;
+  }
+  secretTimer = setTimeout(() => { secretTaps = 0; }, 2000);
+});
+
+// ── ADMIN ──
+const pwModal = document.getElementById('pw-modal');
+const pwInput = document.getElementById('pw-input');
+const pwError = document.getElementById('pw-error');
+function openPwModal() {
+  pwInput.value = ''; pwInput.classList.remove('error'); pwError.textContent = '';
+  pwModal.classList.add('open'); setTimeout(() => pwInput.focus(), 100);
+}
+function closePwModal() { pwModal.classList.remove('open'); }
+document.getElementById('pw-cancel').addEventListener('click', closePwModal);
+// Exit admin button (only visible in admin mode)
+document.getElementById('admin-cat-btn').addEventListener('click', () => {
+  lockAdmin();
+});
+async function tryUnlock() {
+  const now = Date.now();
+  if (now < lockUntil) { pwError.textContent = `Locked — try again in ${Math.ceil((lockUntil - now)/1000)}s`; return; }
+  const hash = await sha256(pwInput.value.trim());
+  if (hash === PASS_HASH) {
+    failCount = 0; closePwModal(); enterAdmin();
+  } else {
+    failCount++;
+    pwInput.classList.add('error');
+    if (failCount >= 3) {
+      lockUntil = Date.now() + LOCK_DURATION; failCount = 0;
+      pwError.textContent = 'Too many attempts — locked for 30s';
+    } else {
+      pwError.textContent = `Incorrect (${3 - failCount} attempt${3 - failCount !== 1 ? 's' : ''} left)`;
+    }
+    pwInput.value = '';
+  }
+}
+document.getElementById('pw-confirm').addEventListener('click', tryUnlock);
+pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+function enterAdmin() {
+  adminMode = true; gallery.classList.add('admin-mode');
+  document.getElementById('admin-bar').classList.add('visible');
+  // Show the exit button in the cats panel
+  const exitBtn = document.getElementById('admin-cat-btn');
+  exitBtn.style.display = '';
+  exitBtn.classList.add('active');
+  resetAdminTimer();
+}
+function lockAdmin() {
+  adminMode = false; gallery.classList.remove('admin-mode');
+  document.getElementById('admin-bar').classList.remove('visible');
+  // Hide exit button again
+  const exitBtn = document.getElementById('admin-cat-btn');
+  exitBtn.style.display = 'none';
+  exitBtn.classList.remove('active');
+  clearTimeout(adminTimer);
+}
+document.getElementById('admin-lock').addEventListener('click', lockAdmin);
+function resetAdminTimer() { clearTimeout(adminTimer); adminTimer = setTimeout(lockAdmin, ADMIN_TIMEOUT); }
+document.addEventListener('touchstart', () => { if (adminMode) resetAdminTimer(); }, { passive: true });
+gallery.addEventListener('click', e => {
+  const s = e.target.closest('.admin-save-btn');
+  if (s && adminMode) {
+    const card = s.closest('.photo-card');
+    card.dataset.caption = card.querySelector('.admin-caption-input').value.trim();
+    card.dataset.cat     = card.querySelector('.admin-cat-select').value;
+    card.querySelector('.photo-caption').textContent = card.dataset.caption;
+    applyFilter();
+    s.textContent = 'Saved';
+    setTimeout(() => { s.textContent = 'Save'; }, 1200);
+  }
+});
+
+// ── LIGHTBOX ──
+const lb      = document.getElementById('lightbox');
+const lbSlide = document.getElementById('lb-slide');
+const lbCap   = document.getElementById('lb-cap');
+const lbDate  = document.getElementById('lb-date');
+let lbIdx = 0, lbCards = [];
+
+function getVis() { return [...document.querySelectorAll('.photo-card:not(.hidden)')]; }
+function renderSlide(card, el) {
+  el.innerHTML = '';
+  const img = card.querySelector('img');
+  const sw  = card.querySelector('.swatch');
+  if (img && img.src && !img.src.endsWith('#')) {
+    const i = document.createElement('img');
+    i.src = img.src; i.alt = img.alt || ''; el.appendChild(i);
+  } else {
+    const d = document.createElement('div');
+    d.className = 'lb-swatch'; d.style.cssText = sw.style.cssText; el.appendChild(d);
+  }
+  lbCap.textContent  = card.dataset.caption || '';
+  lbDate.textContent = card.dataset.date    || '';
+}
+function openLb(card) {
+  lbCards = getVis(); lbIdx = lbCards.indexOf(card);
+  renderSlide(card, lbSlide);
+  lbSlide.style.transition = lbSlide.style.transform = lbSlide.style.opacity = '';
+  lb.classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function closeLb() {
+  lb.classList.remove('open'); document.body.style.overflow = '';
+  lb.style.transform = lb.style.opacity = '';
+}
+function navigateLb(dir) {
+  const outX = dir === 1 ? '-100%' : '100%';
+  const inX  = dir === 1 ?  '100%' : '-100%';
+  lbSlide.style.transition = 'transform 0.26s ease, opacity 0.26s ease';
+  lbSlide.style.transform  = `translateX(${outX})`;
+  lbSlide.style.opacity    = '0';
+  lbIdx = (lbIdx + dir + lbCards.length) % lbCards.length;
+  setTimeout(() => {
+    renderSlide(lbCards[lbIdx], lbSlide);
+    lbSlide.style.transition = 'none';
+    lbSlide.style.transform  = `translateX(${inX})`;
+    lbSlide.style.opacity    = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      lbSlide.style.transition = 'transform 0.26s ease, opacity 0.26s ease';
+      lbSlide.style.transform  = 'translateX(0)';
+      lbSlide.style.opacity    = '1';
+    }));
+  }, 260);
+}
+document.getElementById('lb-close').onclick = closeLb;
+lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+document.getElementById('lb-prev').onclick = () => navigateLb(-1);
+document.getElementById('lb-next').onclick = () => navigateLb(1);
+gallery.addEventListener('click', e => {
+  if (adminMode) return;
+  const c = e.target.closest('.photo-card');
+  if (c) openLb(c);
+});
+
+// Swipe in lightbox
+let swipeX = 0, swipeY = 0, swiping = false;
+lb.addEventListener('touchstart', e => {
+  swipeX = e.touches[0].clientX; swipeY = e.touches[0].clientY;
+  swiping = true; lbSlide.style.transition = 'none';
+}, { passive: true });
+lb.addEventListener('touchmove', e => {
+  if (!swiping) return;
+  const dx = e.touches[0].clientX - swipeX;
+  const dy = e.touches[0].clientY - swipeY;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    lbSlide.style.transform = `translateX(${dx}px)`;
+    lbSlide.style.opacity   = String(Math.max(0, 1 - Math.abs(dx) / (window.innerWidth * 1.2)));
+  } else if (dy > 0) {
+    lb.style.transform = `translateY(${dy * 0.4}px)`;
+    lb.style.opacity   = String(Math.max(0, 1 - dy / (window.innerHeight * 0.8)));
+  }
+}, { passive: true });
+lb.addEventListener('touchend', e => {
+  if (!swiping) return; swiping = false;
+  const dx = e.changedTouches[0].clientX - swipeX;
+  const dy = e.changedTouches[0].clientY - swipeY;
+  lb.style.transform = lb.style.opacity = '';
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    if (Math.abs(dx) > 50) { navigateLb(dx < 0 ? 1 : -1); }
+    else {
+      lbSlide.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+      lbSlide.style.transform  = 'translateX(0)'; lbSlide.style.opacity = '1';
+    }
+  } else if (dy > 90) { closeLb(); }
+  else {
+    lbSlide.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+    lbSlide.style.transform  = 'translateX(0)'; lbSlide.style.opacity = '1';
+  }
+}, { passive: true });
+
+// ── UPLOAD ──
+document.getElementById('file-input').addEventListener('change', e => {
+  [...e.target.files].forEach(file => {
+    const r = new FileReader();
+    r.onload = ev => {
+      const card = document.createElement('div');
+      card.className = 'photo-card'; card.dataset.cat = 'all';
+      card.dataset.caption = file.name.replace(/\.[^.]+$/, '');
+      card.dataset.date    = new Date().getFullYear().toString();
+      card.style.cssText   = 'opacity:0;transform:translateY(8px);';
+      const img = document.createElement('img');
+      img.src = ev.target.result; img.alt = card.dataset.caption;
+      const ov = document.createElement('div'); ov.className = 'photo-overlay';
+      const sp = document.createElement('span'); sp.className = 'photo-caption';
+      sp.textContent = card.dataset.caption; ov.appendChild(sp);
+      const aov = document.createElement('div'); aov.className = 'admin-overlay';
+      aov.innerHTML = `
+        <input class="admin-caption-input" type="text" placeholder="caption" value="${card.dataset.caption}">
+        <select class="admin-cat-select">
+          <option value="street">Street</option><option value="night">Night</option>
+          <option value="detail">Details</option><option value="people">People</option>
+          <option value="all" selected>Untagged</option>
+        </select>
+        <button class="admin-save-btn">Save</button>`;
+      card.appendChild(img); card.appendChild(ov); card.appendChild(aov);
+      gallery.appendChild(card);
+      requestAnimationFrame(() => {
+        card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        card.style.opacity = '1'; card.style.transform = 'translateY(0)';
+      });
+    };
+    r.readAsDataURL(file);
+  });
+  e.target.value = '';
+});
+
+window.addEventListener('resize', () => {
+  if (menuOpen) {
+    measureCardWidth();
+    measureDrawerWidth();
+  }
+});
+</script>
+</body>
+</html>
 
