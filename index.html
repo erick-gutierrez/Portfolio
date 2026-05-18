@@ -142,7 +142,7 @@
     color: var(--white);
     white-space: nowrap;
     user-select: none;
-    z-index: 50;
+    z-index: 110;
     display: none;
     cursor: pointer;
   }
@@ -499,17 +499,30 @@
     position: fixed;
     inset: 0;
     background: var(--bg);
-    z-index: 35;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
   }
   .about-view.visible {
     opacity: 1;
     pointer-events: auto;
+  }
+  /* When about is open, prevent body scroll */
+  body.about-open {
+    overflow: hidden;
+  }
+  /* Hide hamburger and left strip while on about page */
+  body.about-open .left-hamburger,
+  body.about-open .left-strip,
+  body.about-open .mobile-cats {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
   }
   .about-content {
     text-align: center;
@@ -552,45 +565,85 @@
     color: var(--white);
     border-bottom-color: var(--soft);
   }
-  /* Back button on about page — clear visible way to return */
+  /* Back button on about page — visible but aesthetic */
   .about-back {
     position: fixed;
-    top: 1.6rem;
-    left: 1.6rem;
+    top: 1.4rem;
+    left: 1.4rem;
     background: transparent;
-    border: none;
-    color: var(--soft);
+    border: 1px solid var(--soft);
+    color: var(--white);
     font-family: 'Cormorant Garamond', serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.15em;
-    text-transform: lowercase;
+    font-size: 0.8rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
     cursor: pointer;
-    padding: 0.4rem 0.6rem;
-    z-index: 51;
+    padding: 0.7rem 1.3rem;
+    z-index: 110;
     display: none;
     -webkit-tap-highlight-color: transparent;
-    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    min-height: 44px;
   }
   .about-back::before {
     content: '← ';
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     display: inline-block;
-    margin-right: 0.2em;
+    margin-right: 0.4em;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .about-back:hover {
-    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--white);
   }
   .about-back:hover::before {
     transform: translateX(-4px);
   }
+  .about-back:active {
+    background: rgba(255, 255, 255, 0.15);
+  }
   .about-back.visible {
-    display: block;
+    display: inline-flex;
+    align-items: center;
   }
   @media (min-width: 768px) {
-    .about-text { font-size: 1.8rem; }
+    .about-back {
+      top: 1.6rem;
+      left: 1.6rem;
+      font-size: 0.85rem;
+      padding: 0.8rem 1.5rem;
+    }
+  }
+  @media (min-width: 768px) {
+    .about-text { font-size: 2.4rem; }
+    .about-sub { font-size: 0.9rem; margin-top: 2.5rem; }
+  }
+  @media (min-width: 1100px) {
+    .about-text { font-size: 2.8rem; }
   }
 
-  /* /about menu item — modifier on cat-btn */
+  /* ── LANDSCAPE ORIENTATION FIX ──
+     On mobile landscape, the name + cats compete for vertical space.
+     Shift cats to the right of the left strip so they don't overlap. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .mobile-cats {
+      bottom: calc(2.5rem + env(safe-area-inset-bottom));
+      left: 4.5rem;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      max-width: calc(100vw - 6rem);
+    }
+    .cat-btn {
+      padding: 0.2rem 0;
+    }
+    .cat-btn.menu-about {
+      margin-top: 0;
+      margin-left: 0.5rem;
+    }
+  }
   .cat-btn.menu-about {
     margin-top: 1rem;
     font-size: 0.8rem;
@@ -897,10 +950,6 @@
 
     </main>
 
-    <footer class="site-footer">
-      <span class="footer-yr">2024 — 25</span>
-    </footer>
-
   </div>
 </div>
 
@@ -1194,11 +1243,15 @@ function closeLb() {
 }
 function navigateLb(dir) {
   // Premium crossfade: fade out, swap content, fade in
+  // Reset any leftover transform from drag before fading
+  lbSlide.style.transform = 'translateX(0)';
   lbSlide.style.transition = 'opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1)';
   lbSlide.style.opacity    = '0';
   lbIdx = (lbIdx + dir + lbCards.length) % lbCards.length;
   setTimeout(() => {
     renderSlide(lbCards[lbIdx], lbSlide);
+    // Ensure transform is reset for the new content
+    lbSlide.style.transform = 'translateX(0)';
     lbSlide.style.opacity = '0';
     requestAnimationFrame(() => requestAnimationFrame(() => {
       lbSlide.style.opacity = '1';
@@ -1326,7 +1379,14 @@ lb.addEventListener('touchend', e => {
   lb.style.transform = lb.style.opacity = '';
 
   if (Math.abs(dx) >= Math.abs(dy)) {
-    if (Math.abs(dx) > 50) { navigateLb(dx < 0 ? 1 : -1); resetZoom(false); }
+    if (Math.abs(dx) > 50) {
+      // Reset slide position/opacity before navigation so new photo isn't cut off
+      lbSlide.style.transition = 'none';
+      lbSlide.style.transform = 'translateX(0)';
+      lbSlide.style.opacity = '1';
+      navigateLb(dx < 0 ? 1 : -1);
+      resetZoom(false);
+    }
     else {
       lbSlide.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
       lbSlide.style.transform  = 'translateX(0)'; lbSlide.style.opacity = '1';
@@ -1490,6 +1550,7 @@ function openAbout() {
   if (aboutOpen) return;
   aboutOpen = true;
   menuAboutBtn.classList.add('active');
+  document.body.classList.add('about-open');
 
   // Close the menu first
   closeMobileMenu(true);
@@ -1518,6 +1579,7 @@ function closeAbout() {
   if (!aboutOpen) return;
   aboutOpen = false;
   menuAboutBtn.classList.remove('active');
+  document.body.classList.remove('about-open');
 
   // Hide about view and back button first
   aboutView.classList.remove('visible');
@@ -1546,6 +1608,14 @@ menuAboutBtn.addEventListener('click', () => {
 });
 
 aboutBack.addEventListener('click', closeAbout);
+
+// Tap anywhere on the about background (not on text/links) to close
+aboutView.addEventListener('click', (e) => {
+  // Only close if clicking the about-view background, not its children
+  if (e.target === aboutView || e.target.classList.contains('about-content')) {
+    closeAbout();
+  }
+});
 
 // Also close about when any category is tapped
 mobileCats.addEventListener('click', e => {
