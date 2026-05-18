@@ -271,31 +271,49 @@
     letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; padding: 0;
   }
 
-  /* ── FEED ── */
+  /* ── FEED — asymmetric editorial layout ──
+     Mobile: single column, photos at natural aspect ratio
+     Desktop: 12-column grid that creates magazine-style rhythm */
   .feed {
     flex: 1;
-    padding: 1.2rem 0.8rem 3rem 0;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--gap);
-    align-content: start;
+    padding: 1.5rem 1rem 4rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
     touch-action: pan-y;
   }
-
-  /* Menu open: snap to 1 col, lock card width so photos don't stretch. */
-  .feed.menu-open {
-    grid-template-columns: repeat(1, 1fr);
+  @media (min-width: 768px) {
+    .feed {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+      padding: 2.5rem 3rem 5rem 0;
+    }
   }
+  @media (min-width: 1100px) {
+    .feed {
+      gap: 2rem;
+      padding: 3rem 4rem 6rem 0;
+    }
+  }
+
+  /* When menu opens: dim photos gently, no layout restructure */
   .feed.menu-open .photo-card {
-    max-width: var(--card-w, 100%);
-    justify-self: end;
+    opacity: 0.4;
+    pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .feed.menu-open .photo-card.visible {
+    opacity: 0.4;
   }
 
-  /* ── PHOTO CARD ── */
+  /* ── PHOTO CARD ──
+     Natural aspect ratio (set by inline style or layout class).
+     Mobile: full-width single column.
+     Desktop: positioned in asymmetric grid via classes. */
   .photo-card {
     position: relative;
     width: 100%;
-    aspect-ratio: 3 / 4;
     overflow: hidden;
     cursor: pointer;
     background: #0a0a0a;
@@ -306,18 +324,42 @@
                 transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
     /* Performance: skip rendering off-screen photos */
     content-visibility: auto;
-    contain-intrinsic-size: auto 400px;
+    contain-intrinsic-size: auto 500px;
     /* Allow only vertical scroll touch interaction */
     touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
-    /* Soft scroll snap — gentle pull toward each photo row */
+    /* Soft scroll snap on mobile only - desktop multi-col doesn't need it */
     scroll-snap-align: start;
     scroll-margin-top: 1rem;
+  }
+  @media (min-width: 768px) {
+    .photo-card {
+      scroll-snap-align: none;
+    }
   }
   .photo-card.visible {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
+  /* Desktop grid placement classes — span columns to create rhythm */
+  @media (min-width: 768px) {
+    /* Hero: full 12 columns */
+    .photo-card.span-full { grid-column: span 12; }
+    /* Half: 6 columns */
+    .photo-card.span-half { grid-column: span 6; }
+    /* Third: 4 columns */
+    .photo-card.span-third { grid-column: span 4; }
+    /* Two-thirds: 8 columns */
+    .photo-card.span-2-3 { grid-column: span 8; }
+    /* Right-aligned in row */
+    .photo-card.span-half-right { grid-column: 7 / span 6; }
+    /* Default if no span class */
+    .photo-card:not([class*="span-"]) { grid-column: span 6; }
+  }
+  /* Photo cards use natural aspect ratio via inline aspect-ratio attribute */
+  .photo-card[data-aspect="landscape"] { aspect-ratio: 3 / 2; }
+  .photo-card[data-aspect="portrait"]  { aspect-ratio: 2 / 3; }
+  .photo-card[data-aspect="square"]    { aspect-ratio: 1 / 1; }
   /* Hover effect only on devices that can actually hover (desktop) */
   @media (hover: hover) {
     .photo-card.visible {
@@ -325,7 +367,7 @@
                   transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .photo-card.visible:hover {
-      transform: scale(1.01);
+      transform: scale(1.005);
     }
   }
   /* Blurred placeholder background while image loads */
@@ -467,17 +509,6 @@
     .site-name-vertical { font-size: 1.25rem; letter-spacing: 0.28em; }
     /* Panel starts at right edge of desktop left-strip */
     .mobile-drawer-panel { left: 160px !important; }
-    .feed {
-      padding: 1.6rem 3rem 4rem 0; gap: 16px;
-    }
-    .feed.menu-open {
-      grid-template-columns: repeat(1, 1fr) !important;
-    }
-    .feed.menu-open .photo-card {
-      max-width: var(--card-w, 100%) !important;
-      justify-self: end !important;
-    }
-    .photo-card { aspect-ratio: 1 / 1; }
     .admin-bar   { padding: 5px 3rem 5px 0; }
     .upload-area { padding: 1.2rem 3rem 0.6rem 0; }
     .site-footer { padding: 0.8rem 3rem 2.5rem 0; }
@@ -486,7 +517,6 @@
     .shell { padding-left: 200px; }
     .left-strip { width: 200px !important; padding: 2.4rem 0 3rem 2.4rem; }
     .mobile-drawer-panel { left: 200px !important; }
-    .feed { padding: 2rem 4rem 5rem 0; gap: 20px; }
     .admin-bar   { padding: 5px 4rem 5px 0; }
     .upload-area { padding: 1.4rem 4rem 0.8rem 0; }
     .site-footer { padding: 1rem 4rem 3rem 0; }
@@ -565,55 +595,53 @@
     color: var(--white);
     border-bottom-color: var(--soft);
   }
-  /* Back button on about page — visible but aesthetic */
+  /* Back button on about page — bottom-left, typed with persistent caret */
   .about-back {
     position: fixed;
-    top: 1.4rem;
-    left: 1.4rem;
+    bottom: 8vh;
+    left: 1.6rem;
     background: transparent;
-    border: 1px solid var(--soft);
-    color: var(--white);
+    border: none;
+    color: var(--light);
     font-family: 'Cormorant Garamond', serif;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 300;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    text-transform: lowercase;
     cursor: pointer;
-    padding: 0.7rem 1.3rem;
+    padding: 0.6rem 0.8rem;
     z-index: 110;
     display: none;
     -webkit-tap-highlight-color: transparent;
-    transition: background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     min-height: 44px;
+    min-width: 80px;
+    text-align: left;
+    white-space: nowrap;
   }
-  .about-back::before {
-    content: '← ';
-    display: inline-block;
-    margin-right: 0.4em;
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .about-back:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--white);
-  }
-  .about-back:hover::before {
-    transform: translateX(-4px);
-  }
-  .about-back:active {
-    background: rgba(255, 255, 255, 0.15);
-  }
+  .about-back:hover { color: var(--white); }
   .about-back.visible {
     display: inline-flex;
     align-items: center;
   }
+  /* Persistent blinking caret inside back button */
+  .about-back .back-caret {
+    display: inline-block;
+    width: 1.5px;
+    height: 0.9em;
+    background: var(--light);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: caret-blink 0.7s steps(2) infinite;
+  }
+  .about-back:hover .back-caret {
+    background: var(--white);
+  }
   @media (min-width: 768px) {
     .about-back {
-      top: 1.6rem;
-      left: 1.6rem;
-      font-size: 0.85rem;
-      padding: 0.8rem 1.5rem;
+      bottom: 6vh;
+      left: 2rem;
+      font-size: 0.9rem;
     }
   }
   @media (min-width: 768px) {
@@ -781,7 +809,7 @@
 
   <!-- About page overlay -->
   <div class="about-view" id="about-view">
-    <button class="about-back" id="about-back">back</button>
+    <button class="about-back" id="about-back"><span id="back-text"></span><span class="back-caret"></span></button>
     <div class="about-content">
       <p class="about-text">Photographer based in South Jersey</p>
       <p class="about-sub"><a href="mailto:contact@erickgutierrez.xyz" class="about-link">contact@erickgutierrez.xyz</a> · 2026</p>
@@ -816,8 +844,8 @@
 
     <main class="feed" id="gallery">
 
-      <!-- 1. NYPD officer B&W — emotional anchor, top of portfolio -->
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+      <!-- 1. NYPD officer B&W — emotional anchor, full-width hero -->
+      <div class="photo-card span-full" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0636_ngnctl.jpg" alt="untitled">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -827,8 +855,8 @@
         </div>
       </div>
 
-      <!-- 2. Scaffolding tunnel selective color — dramatic, immediate impact -->
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+      <!-- 2. Scaffolding tunnel selective color — third column portrait, paired with pigeon man -->
+      <div class="photo-card span-third" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="portrait">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779078294/sidewalkimage2_qfvpic.png" alt="untitled">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -838,8 +866,8 @@
         </div>
       </div>
 
-      <!-- 3. Pigeon man — striking color piece -->
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+      <!-- 3. Pigeon man — 2/3 width landscape, asymmetric pair with scaffolding -->
+      <div class="photo-card span-2-3" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779063955/DSC_0433_wknneo.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -849,8 +877,8 @@
         </div>
       </div>
 
-      <!-- 4. Woman with dogs — cinematic composition -->
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+      <!-- 4. Woman with dogs — half width landscape -->
+      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779069082/DSC_0516_joubc6.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -860,8 +888,8 @@
         </div>
       </div>
 
-      <!-- 5. Escalator crowd B&W — second monochrome moment -->
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+      <!-- 5. Escalator crowd B&W — half width landscape, pairs with woman with dogs -->
+      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0118_e88ntu.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -871,8 +899,8 @@
         </div>
       </div>
 
-      <!-- 6. Magic Gardens — color and texture variety -->
-      <div class="photo-card" data-cat="detail" data-caption="untitled" data-date="2025">
+      <!-- 6. Magic Gardens — 2/3 width landscape anchors left, paired with suited man -->
+      <div class="photo-card span-2-3" data-cat="detail" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0399_vgvdnk.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -882,8 +910,8 @@
         </div>
       </div>
 
-      <!-- 7. Suited man with truck and flowers -->
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+      <!-- 7. Suited man with truck and flowers — third width landscape -->
+      <div class="photo-card span-third" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0918_ksgpr6.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -893,8 +921,8 @@
         </div>
       </div>
 
-      <!-- 8. Book man -->
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+      <!-- 8. Book man — half width landscape -->
+      <div class="photo-card span-half" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -904,8 +932,8 @@
         </div>
       </div>
 
-      <!-- 9. Chicago skybridge — architectural break -->
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+      <!-- 9. Chicago skybridge — half width landscape, paired with book man -->
+      <div class="photo-card span-half" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0933_tjheg4.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -915,8 +943,8 @@
         </div>
       </div>
 
-      <!-- 10. Miniature room — quiet detail moment -->
-      <div class="photo-card" data-cat="detail" data-caption="untitled" data-date="2025">
+      <!-- 10. Miniature room — full width quiet hero moment -->
+      <div class="photo-card span-full" data-cat="detail" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0679_tyakb3.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -926,8 +954,8 @@
         </div>
       </div>
 
-      <!-- 11. Philadelphia 2025 -->
-      <div class="photo-card" data-cat="street" data-caption="philadelphia - 2025" data-date="2025">
+      <!-- 11. Philadelphia 2025 — half width landscape -->
+      <div class="photo-card span-half" data-cat="street" data-caption="philadelphia - 2025" data-date="2025" data-aspect="landscape">
         <img src="https://live.staticflickr.com/65535/54761819820_518eb7e90c_b.jpg" alt="philadelphia - 2025" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">philadelphia - 2025</span></div>
         <div class="admin-overlay">
@@ -937,8 +965,8 @@
         </div>
       </div>
 
-      <!-- 12. No title -->
-      <div class="photo-card" data-cat="people" data-caption="no title" data-date="2025">
+      <!-- 12. No title — half width landscape -->
+      <div class="photo-card span-half" data-cat="people" data-caption="no title" data-date="2025" data-aspect="landscape">
         <img src="https://live.staticflickr.com/65535/54761823980_4fdfff3a88_b.jpg" alt="no title" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">no title</span></div>
         <div class="admin-overlay">
@@ -1563,16 +1591,33 @@ function openAbout() {
       leftStrip.style.opacity = '0';
       leftStrip.style.transition = 'opacity 0.3s ease';
 
-      // Show horizontal name container, then type into it (slightly faster than init)
+      // Show horizontal name container, then type into it
       nameHorizontal.classList.add('visible');
       typeInto(nameHText, typeCaretH, NAME, 70);
 
       // Show about view
       aboutView.classList.add('visible');
-      // Show back button
+      // Show back button and type "← back" — caret keeps blinking forever
       aboutBack.classList.add('visible');
-    }, 25); // fast char delete
-  }, 150); // shorter wait for menu close
+      typeBackButton();
+    }, 25);
+  }, 150);
+}
+
+// Type "← back" into back button — caret never hides (keeps blinking)
+function typeBackButton() {
+  const backText = document.getElementById('back-text');
+  backText.textContent = '';
+  const fullText = '← back';
+  let i = 0;
+  function tick() {
+    if (i <= fullText.length) {
+      backText.textContent = fullText.slice(0, i);
+      i++;
+      setTimeout(tick, 80);
+    }
+  }
+  setTimeout(tick, 400); // small pause after about view appears
 }
 
 function closeAbout() {
@@ -1584,6 +1629,8 @@ function closeAbout() {
   // Hide about view and back button first
   aboutView.classList.remove('visible');
   aboutBack.classList.remove('visible');
+  // Clear back button text so it retypes fresh next time
+  document.getElementById('back-text').textContent = '';
 
   setTimeout(() => {
     // Delete horizontal name (fast)
