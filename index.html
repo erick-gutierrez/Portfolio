@@ -17,7 +17,10 @@
     --admin: #9a7c58;
     --gap: 8px;
   }
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     background: var(--bg);
     font-family: 'Cormorant Garamond', Georgia, serif;
@@ -25,7 +28,15 @@
     color: var(--white);
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+  /* Premium scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
   /* ═══════════════════════════════════════
      MOBILE LAYOUT
@@ -94,22 +105,23 @@
      Never affects layout — floats above everything.
   ── */
   /* ── MOBILE DRAWER PANEL ──
-     Starts at left edge of photo column (56px = left-strip width).
-     Slides right. z-index below left-strip (40). */
+     Uses GPU-accelerated transform for buttery smooth animation. */
   .mobile-drawer-panel {
     position: fixed;
     top: 0;
     bottom: 0;
     left: 56px;
-    width: 0;
+    width: var(--drawer-w, 120px);
     background: var(--bg);
     z-index: 18;
-    overflow: hidden;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Hidden state: translated off-screen left */
+    transform: translate3d(-100%, 0, 0);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
+    will-change: transform;
   }
   .mobile-drawer-panel.open {
-    width: var(--drawer-w, 120px);
+    transform: translate3d(0, 0, 0);
   }
 
   /* ── CATEGORY TEXT ── */
@@ -125,7 +137,7 @@
     pointer-events: none;
     z-index: 44;
     opacity: 0;
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .mobile-cats.open {
     opacity: 1;
@@ -145,12 +157,15 @@
     white-space: nowrap;
     opacity: 0;
     transform: translateY(8px);
-    transition: color 0.2s;
+    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     line-height: 1.2;
     pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .cat-btn.active { color: var(--white); }
   .cat-btn:hover  { color: var(--white); }
+  .cat-btn:active { transform: translateY(0) scale(0.96); }
   @keyframes catUp { to { opacity: 1; transform: translateY(0); } }
 
   /* ── FLOATING HAMBURGER ──
@@ -160,15 +175,13 @@
     display: flex; flex-direction: column;
     align-items: flex-start; justify-content: center;
     gap: 5px; cursor: pointer; padding: 0;
-    width: 40px; flex-shrink: 0;
     position: fixed;
     left: 0;
     width: 56px;
-    /* Center lines within the 56px strip */
     padding-left: 1rem;
     bottom: calc(2rem + env(safe-area-inset-bottom));
     z-index: 45;
-    transition: bottom 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
   }
   .left-hamburger span {
     display: block; height: 1.5px; background: var(--white);
@@ -207,21 +220,13 @@
     align-content: start;
   }
 
-  /* Menu open: snap to 1 col, lock card width so photos don't stretch.
-     The smooth effect comes from each card's transform animation in JS. */
+  /* Menu open: snap to 1 col, lock card width so photos don't stretch. */
   .feed.menu-open {
     grid-template-columns: repeat(1, 1fr);
   }
   .feed.menu-open .photo-card {
     max-width: var(--card-w, 100%);
     justify-self: end;
-  }
-
-  /* Smooth card slide transition — applied to all cards so they
-     animate in/out of position. JS sets transform before class change. */
-  .photo-card {
-    transition: transform 0.8s cubic-bezier(0.4,0,0.2,1),
-                opacity 0.8s cubic-bezier(0.4,0,0.2,1);
   }
 
   /* ── PHOTO CARD ── */
@@ -233,31 +238,40 @@
     cursor: pointer;
     background: #0a0a0a;
     opacity: 0;
-    transform: translateY(8px);
-    animation: rise 0.4s ease forwards;
+    transform: translate3d(0, 12px, 0);
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    /* Performance: skip rendering off-screen photos */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px;
+    /* Premium feel: smooth transitions for interactions */
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .photo-card:nth-child(1)  { animation-delay:.03s }
-  .photo-card:nth-child(2)  { animation-delay:.07s }
-  .photo-card:nth-child(3)  { animation-delay:.12s }
-  .photo-card:nth-child(4)  { animation-delay:.17s }
-  .photo-card:nth-child(5)  { animation-delay:.22s }
-  .photo-card:nth-child(6)  { animation-delay:.27s }
-  .photo-card:nth-child(7)  { animation-delay:.32s }
-  .photo-card:nth-child(8)  { animation-delay:.37s }
-  .photo-card:nth-child(9)  { animation-delay:.42s }
-  .photo-card:nth-child(10) { animation-delay:.47s }
-  .photo-card:nth-child(11) { animation-delay:.52s }
-  .photo-card:nth-child(12) { animation-delay:.57s }
-  @keyframes rise { to { opacity:1; transform:translateY(0); } }
+  .photo-card:active {
+    transform: scale(0.985);
+  }
+  .photo-card:nth-child(1)  { animation-delay:.05s }
+  .photo-card:nth-child(2)  { animation-delay:.10s }
+  .photo-card:nth-child(3)  { animation-delay:.15s }
+  .photo-card:nth-child(4)  { animation-delay:.20s }
+  .photo-card:nth-child(5)  { animation-delay:.25s }
+  .photo-card:nth-child(6)  { animation-delay:.30s }
+  .photo-card:nth-child(7)  { animation-delay:.35s }
+  .photo-card:nth-child(8)  { animation-delay:.40s }
+  .photo-card:nth-child(9)  { animation-delay:.45s }
+  .photo-card:nth-child(10) { animation-delay:.50s }
+  .photo-card:nth-child(11) { animation-delay:.55s }
+  .photo-card:nth-child(12) { animation-delay:.60s }
+  @keyframes rise {
+    to { opacity:1; transform: translate3d(0, 0, 0); }
+  }
 
   .photo-card img, .photo-card .swatch {
     width: 100%; height: 100%;
     object-fit: cover; display: block;
-    filter: contrast(1.08) brightness(0.88) saturate(0.6);
-    transition: filter 0.3s;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .photo-card:hover img, .photo-card:hover .swatch {
-    filter: contrast(1.1) brightness(0.96) saturate(0.65);
+    transform: scale(1.03);
   }
   .photo-overlay {
     position: absolute; inset: 0;
@@ -316,7 +330,7 @@
     z-index: 19;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .left-strip-cover.active {
     opacity: 1;
@@ -387,8 +401,13 @@
     background: #000; flex-direction: column;
     align-items: center; justify-content: center;
     touch-action: none;
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .lightbox.open { display: flex; }
+  .lightbox.open {
+    display: flex;
+    opacity: 1;
+  }
   .lb-track {
     flex: 1; width: 100%; position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
@@ -402,7 +421,6 @@
   }
   .lb-slide img {
     max-width: 100%; max-height: 100%; display: block;
-    filter: contrast(1.1) brightness(0.92) saturate(0.65);
     object-fit: contain; user-select: none;
     transform-origin: center center;
     transition: transform 0.1s ease;
@@ -513,36 +531,7 @@
 
     <main class="feed" id="gallery">
 
-     <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779078294/sidewalkimage2_qfvpic.png" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779063955/DSC_0433_wknneo.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779069082/DSC_0516_joubc6.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
+      <!-- 1. NYPD officer B&W — emotional anchor, top of portfolio -->
       <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0636_ngnctl.jpg" alt="untitled">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
@@ -553,8 +542,53 @@
         </div>
       </div>
 
+      <!-- 2. Scaffolding tunnel selective color — dramatic, immediate impact -->
+      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779078294/sidewalkimage2_qfvpic.png" alt="untitled">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 3. Pigeon man — striking color piece -->
+      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779063955/DSC_0433_wknneo.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 4. Woman with dogs — cinematic composition -->
+      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779069082/DSC_0516_joubc6.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 5. Escalator crowd B&W — second monochrome moment -->
+      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0118_e88ntu.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 6. Magic Gardens — color and texture variety -->
       <div class="photo-card" data-cat="detail" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0679_tyakb3.jpg" alt="untitled">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0399_vgvdnk.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
@@ -563,8 +597,53 @@
         </div>
       </div>
 
+      <!-- 7. Suited man with truck and flowers -->
+      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0918_ksgpr6.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 8. Book man -->
+      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 9. Chicago skybridge — architectural break -->
+      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0933_tjheg4.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 10. Miniature room — quiet detail moment -->
+      <div class="photo-card" data-cat="detail" data-caption="untitled" data-date="2025">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0679_tyakb3.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 11. Philadelphia 2025 -->
       <div class="photo-card" data-cat="street" data-caption="philadelphia - 2025" data-date="2025">
-        <img src="https://live.staticflickr.com/65535/54761819820_518eb7e90c_b.jpg" alt="philadelphia - 2025">
+        <img src="https://live.staticflickr.com/65535/54761819820_518eb7e90c_b.jpg" alt="philadelphia - 2025" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">philadelphia - 2025</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="philadelphia - 2025">
@@ -573,62 +652,13 @@
         </div>
       </div>
 
+      <!-- 12. No title -->
       <div class="photo-card" data-cat="people" data-caption="no title" data-date="2025">
-        <img src="https://live.staticflickr.com/65535/54761823980_4fdfff3a88_b.jpg" alt="no title">
+        <img src="https://live.staticflickr.com/65535/54761823980_4fdfff3a88_b.jpg" alt="no title" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">no title</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="no title">
           <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0933_tjheg4.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="street" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0918_ksgpr6.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="people" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0118_e88ntu.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card" data-cat="detail" data-caption="untitled" data-date="2025">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0399_vgvdnk.jpg" alt="untitled">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
           <button class="admin-save-btn">Save</button>
         </div>
       </div>
@@ -722,49 +752,29 @@ function openMobileMenu() {
   measureCardWidth();
   measureDrawerWidth();
 
-  // Pre-position left-col cards off to the right before grid snaps to 1-col
-  // so they appear to slide in from the right side
-  const allCards = [...feed.querySelectorAll('.photo-card:not(.hidden)')];
-  allCards.forEach((card, i) => {
-    if (i % 2 === 0) {
-      // Left column cards (even index in visible list = odd nth-child)
-      // Start them offset to the right so they slide into position
-      card.style.transition = 'none';
-      card.style.transform  = 'translateX(100%)';
-    }
-  });
-
-  // Let the pre-position apply, then snap grid and animate
+  // Single animation frame for clean class swap
   requestAnimationFrame(() => {
+    hamburger.classList.add('open');
+    cover.classList.add('active');
+    document.body.classList.add('menu-open');
+    drawerPanel.classList.add('open');
+    feed.classList.add('menu-open');
+    mobileCats.classList.add('open');
+
+    // Stagger cats bottom→top
+    catBtns.forEach(btn => {
+      btn.style.transition    = '';
+      btn.style.animation     = 'none';
+      btn.style.opacity       = '0';
+      btn.style.transform     = 'translateY(8px)';
+      btn.style.pointerEvents = 'none';
+    });
     requestAnimationFrame(() => {
-      hamburger.classList.add('open');
-      cover.classList.add('active');
-      document.body.classList.add('menu-open');
-      drawerPanel.classList.add('open');
-      feed.classList.add('menu-open');
-      mobileCats.classList.add('open');
-
-      // Now animate all cards to their natural position
-      allCards.forEach(card => {
-        card.style.transition = '';
-        card.style.transform  = '';
-      });
-
-      // Stagger cats bottom→top
-      catBtns.forEach(btn => {
-        btn.style.transition    = '';
-        btn.style.animation     = 'none';
-        btn.style.opacity       = '0';
-        btn.style.transform     = 'translateY(8px)';
-        btn.style.pointerEvents = 'none';
-      });
-      requestAnimationFrame(() => {
-        const n = catBtns.length;
-        catBtns.forEach((btn, i) => {
-          const delay = 0.2 + (n - 1 - i) * 0.09;
-          btn.style.animation     = `catUp 0.5s cubic-bezier(0.4,0,0.2,1) ${delay}s forwards`;
-          btn.style.pointerEvents = 'auto';
-        });
+      const n = catBtns.length;
+      catBtns.forEach((btn, i) => {
+        const delay = 0.15 + (n - 1 - i) * 0.07;
+        btn.style.animation     = `catUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s forwards`;
+        btn.style.pointerEvents = 'auto';
       });
     });
   });
@@ -781,27 +791,23 @@ function closeMobileMenu(fast) {
 
   // Collapse black panel
   drawerPanel.classList.remove('open');
-  // Restore 2-col grid and clear any leftover card transforms
+  // Restore 2-col grid
   feed.classList.remove('menu-open');
-  [...feed.querySelectorAll('.photo-card')].forEach(card => {
-    card.style.transition = '';
-    card.style.transform  = '';
-  });
   // Fade category panel out
   mobileCats.classList.remove('open');
 
   // Fade cat text out
-  const dur = fast ? '0.12s' : '0.8s';
+  const dur = fast ? '0.12s' : '0.7s';
   catBtns.forEach(btn => {
     btn.style.pointerEvents = 'none';
     btn.style.animation     = 'none';
-    btn.style.transition    = `opacity ${dur} cubic-bezier(0.4,0,0.2,1), transform ${dur} cubic-bezier(0.4,0,0.2,1)`;
+    btn.style.transition    = `opacity ${dur} cubic-bezier(0.22, 1, 0.36, 1), transform ${dur} cubic-bezier(0.22, 1, 0.36, 1)`;
     btn.style.opacity       = '0';
     btn.style.transform     = 'translateY(6px)';
   });
 
   // After fade, wipe inline styles so next open is clean
-  const clearMs = fast ? 150 : 820;
+  const clearMs = fast ? 150 : 720;
   closeTimer = setTimeout(() => {
     if (!menuOpen) {
       catBtns.forEach(btn => {
@@ -954,23 +960,17 @@ function closeLb() {
   lb.style.transform = lb.style.opacity = '';
 }
 function navigateLb(dir) {
-  const outX = dir === 1 ? '-100%' : '100%';
-  const inX  = dir === 1 ?  '100%' : '-100%';
-  lbSlide.style.transition = 'transform 0.26s ease, opacity 0.26s ease';
-  lbSlide.style.transform  = `translateX(${outX})`;
+  // Premium crossfade: fade out, swap content, fade in
+  lbSlide.style.transition = 'opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1)';
   lbSlide.style.opacity    = '0';
   lbIdx = (lbIdx + dir + lbCards.length) % lbCards.length;
   setTimeout(() => {
     renderSlide(lbCards[lbIdx], lbSlide);
-    lbSlide.style.transition = 'none';
-    lbSlide.style.transform  = `translateX(${inX})`;
-    lbSlide.style.opacity    = '0';
+    lbSlide.style.opacity = '0';
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      lbSlide.style.transition = 'transform 0.26s ease, opacity 0.26s ease';
-      lbSlide.style.transform  = 'translateX(0)';
-      lbSlide.style.opacity    = '1';
+      lbSlide.style.opacity = '1';
     }));
-  }, 260);
+  }, 320);
 }
 document.getElementById('lb-close').onclick = closeLb;
 lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
@@ -1128,23 +1128,6 @@ function navigateLbWithReset(dir) {
 }
 document.getElementById('lb-prev').onclick = () => navigateLbWithReset(-1);
 document.getElementById('lb-next').onclick = () => navigateLbWithReset(1);
-
-// ── FLOATING HAMBURGER — stays above Safari browser bar ──
-const hamburgerEl = document.getElementById('hamburger');
-function updateHamburgerPos() {
-  if (!window.visualViewport) return;
-  const vv = window.visualViewport;
-  // Distance from bottom of visual viewport to bottom of layout viewport
-  const offset = window.innerHeight - vv.height - vv.offsetTop;
-  const safeArea = parseInt(getComputedStyle(document.documentElement)
-    .getPropertyValue('--safe-bottom') || '0');
-  hamburgerEl.style.bottom = Math.max(offset + 32, 32) + 'px';
-}
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', updateHamburgerPos);
-  window.visualViewport.addEventListener('scroll', updateHamburgerPos);
-}
-updateHamburgerPos();
 </script>
 </body>
 </html>
