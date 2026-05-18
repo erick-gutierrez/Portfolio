@@ -20,6 +20,7 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    scroll-snap-type: y proximity;
   }
   body {
     background: var(--bg);
@@ -37,6 +38,19 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+  /* Film grain overlay — cinematic texture across entire page */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 200px 200px;
+  }
 
   /* ═══════════════════════════════════════
      MOBILE LAYOUT
@@ -87,6 +101,53 @@
     white-space: nowrap;
     user-select: none;
     flex-shrink: 0;
+    cursor: pointer;
+  }
+  /* Typewriter caret — blinks while typing, hides when done */
+  .type-caret {
+    display: inline-block;
+    background: var(--white);
+    animation: caret-blink 0.7s steps(2) infinite;
+    margin-left: 2px;
+    width: 1.5px;
+    height: 0.85em;
+    vertical-align: middle;
+  }
+  /* Caret inside vertical-writing name — rotated so it appears as a horizontal bar
+     matching the bottom→top reading direction of the vertical text */
+  .site-name-vertical .type-caret {
+    width: 0.85em;
+    height: 1.5px;
+    margin-left: 0;
+    margin-top: 2px;
+    vertical-align: baseline;
+  }
+  .type-caret.hidden {
+    display: none;
+  }
+  @keyframes caret-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Horizontal name for about page — top right corner */
+  .site-name-horizontal {
+    position: fixed;
+    top: 1.6rem;
+    right: 1.6rem;
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--white);
+    white-space: nowrap;
+    user-select: none;
+    z-index: 50;
+    display: none;
+    cursor: pointer;
+  }
+  .site-name-horizontal.visible {
+    display: block;
   }
 
   /* bottom anchor for the floating cat panel */
@@ -218,6 +279,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: var(--gap);
     align-content: start;
+    touch-action: pan-y;
   }
 
   /* Menu open: snap to 1 col, lock card width so photos don't stretch. */
@@ -237,48 +299,85 @@
     overflow: hidden;
     cursor: pointer;
     background: #0a0a0a;
+    /* Scroll-triggered fade-in: starts hidden, IntersectionObserver adds .visible */
     opacity: 0;
-    transform: translate3d(0, 12px, 0);
-    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform: translate3d(0, 20px, 0);
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
     /* Performance: skip rendering off-screen photos */
     content-visibility: auto;
     contain-intrinsic-size: auto 400px;
-    /* Premium feel: smooth transitions for interactions */
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Allow only vertical scroll touch interaction */
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+    /* Soft scroll snap — gentle pull toward each photo row */
+    scroll-snap-align: start;
+    scroll-margin-top: 1rem;
   }
-  .photo-card:active {
-    transform: scale(0.985);
+  .photo-card.visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
-  .photo-card:nth-child(1)  { animation-delay:.05s }
-  .photo-card:nth-child(2)  { animation-delay:.10s }
-  .photo-card:nth-child(3)  { animation-delay:.15s }
-  .photo-card:nth-child(4)  { animation-delay:.20s }
-  .photo-card:nth-child(5)  { animation-delay:.25s }
-  .photo-card:nth-child(6)  { animation-delay:.30s }
-  .photo-card:nth-child(7)  { animation-delay:.35s }
-  .photo-card:nth-child(8)  { animation-delay:.40s }
-  .photo-card:nth-child(9)  { animation-delay:.45s }
-  .photo-card:nth-child(10) { animation-delay:.50s }
-  .photo-card:nth-child(11) { animation-delay:.55s }
-  .photo-card:nth-child(12) { animation-delay:.60s }
-  @keyframes rise {
-    to { opacity:1; transform: translate3d(0, 0, 0); }
+  /* Hover effect only on devices that can actually hover (desktop) */
+  @media (hover: hover) {
+    .photo-card.visible {
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .photo-card.visible:hover {
+      transform: scale(1.01);
+    }
+  }
+  /* Blurred placeholder background while image loads */
+  .photo-card .placeholder {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(20px);
+    transform: scale(1.1);
+    transition: opacity 0.4s ease;
+    z-index: 0;
+  }
+  .photo-card.loaded .placeholder {
+    opacity: 0;
   }
 
   .photo-card img, .photo-card .swatch {
     width: 100%; height: 100%;
     object-fit: cover; display: block;
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+    z-index: 1;
   }
-  .photo-card:hover img, .photo-card:hover .swatch {
-    transform: scale(1.03);
+  .photo-card img {
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .photo-card img.loaded {
+    opacity: 1;
+  }
+  @media (hover: hover) {
+    .photo-card img.loaded, .photo-card .swatch {
+      transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .photo-card:hover img.loaded, .photo-card:hover .swatch {
+      transform: scale(1.03);
+    }
   }
   .photo-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 55%);
-    opacity: 0; transition: opacity 0.25s;
-    display: flex; align-items: flex-end;
-    padding: 10px; pointer-events: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    pointer-events: none;
+    z-index: 2;
   }
   .photo-card:hover .photo-overlay { opacity: 1; }
   .photo-caption {
@@ -394,8 +493,128 @@
   }
 
   /* ═══════════════════════════════════════
-     LIGHTBOX
+     ABOUT PAGE
   ═══════════════════════════════════════ */
+  .about-view {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .about-view.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .about-content {
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+  }
+  .about-text {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--light);
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s,
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+  }
+  .about-view.visible .about-text {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .about-sub {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-top: 2rem;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s;
+  }
+  .about-view.visible .about-sub {
+    opacity: 1;
+  }
+  .about-link {
+    color: var(--soft);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.3s, border-bottom-color 0.3s;
+  }
+  .about-link:hover {
+    color: var(--white);
+    border-bottom-color: var(--soft);
+  }
+  /* Back button on about page — clear visible way to return */
+  .about-back {
+    position: fixed;
+    top: 1.6rem;
+    left: 1.6rem;
+    background: transparent;
+    border: none;
+    color: var(--soft);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: lowercase;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    z-index: 51;
+    display: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .about-back::before {
+    content: '← ';
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    display: inline-block;
+    margin-right: 0.2em;
+  }
+  .about-back:hover {
+    color: var(--white);
+  }
+  .about-back:hover::before {
+    transform: translateX(-4px);
+  }
+  .about-back.visible {
+    display: block;
+  }
+  @media (min-width: 768px) {
+    .about-text { font-size: 1.8rem; }
+  }
+
+  /* /about menu item — modifier on cat-btn */
+  .cat-btn.menu-about {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--light);
+    text-transform: lowercase;
+    position: relative;
+  }
+  .cat-btn.menu-about::before {
+    content: '→ ';
+    color: var(--soft);
+    margin-right: 0.3em;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    display: inline-block;
+  }
+  .cat-btn.menu-about:hover {
+    color: var(--white);
+  }
+  .cat-btn.menu-about:hover::before {
+    transform: translateX(4px);
+    color: var(--white);
+  }
+  .cat-btn.menu-about.active { color: var(--white); }
   .lightbox {
     display: none; position: fixed; inset: 0; z-index: 1000;
     background: #000; flex-direction: column;
@@ -499,9 +718,21 @@
 <div class="left-strip-cover" id="left-strip-cover"></div>
 <div class="shell">
 
-  <!-- LEFT STRIP — name only -->
+  <!-- LEFT STRIP — name only (filled by typewriter on load) -->
   <div class="left-strip" id="left-strip">
-    <span class="site-name-vertical" id="secret-trigger">Erick Gutierrez</span>
+    <span class="site-name-vertical" id="secret-trigger"><span id="name-text"></span><span class="type-caret" id="type-caret"></span></span>
+  </div>
+
+  <!-- Horizontal name for about page -->
+  <div class="site-name-horizontal" id="name-horizontal"><span id="name-horizontal-text"></span><span class="type-caret hidden" id="type-caret-h"></span></div>
+
+  <!-- About page overlay -->
+  <div class="about-view" id="about-view">
+    <button class="about-back" id="about-back">back</button>
+    <div class="about-content">
+      <p class="about-text">Photographer based in South Jersey</p>
+      <p class="about-sub"><a href="mailto:contact@erickgutierrez.xyz" class="about-link">contact@erickgutierrez.xyz</a> · 2026</p>
+    </div>
   </div>
 
   <!-- Black sliding panel -->
@@ -513,6 +744,7 @@
     <button class="cat-btn" data-cat="street">Street</button>
     <button class="cat-btn" data-cat="detail">Details</button>
     <button class="cat-btn" data-cat="people">People</button>
+    <button class="cat-btn menu-about" id="menu-about-btn">/about</button>
     <button class="cat-btn admin-exit-btn" id="admin-cat-btn" style="display:none;">Exit Admin</button>
   </div>
 
@@ -827,7 +1059,7 @@ hamburger.addEventListener('click', () => {
 // ── CAT SELECTION — only filter, menu stays open ──
 mobileCats.addEventListener('click', e => {
   const btn = e.target.closest('.cat-btn');
-  if (!btn || btn.id === 'admin-cat-btn') return;
+  if (!btn || btn.id === 'admin-cat-btn' || btn.id === 'menu-about-btn') return;
   syncCatUI(btn.dataset.cat);
 });
 
@@ -846,7 +1078,7 @@ function syncCatUI(cat) {
 
 // ── SECRET ADMIN TRIGGER — tap name 5 times within 2 seconds ──
 let secretTaps = 0, secretTimer = null;
-document.getElementById('secret-trigger').addEventListener('click', () => {
+function handleSecretTap() {
   secretTaps++;
   clearTimeout(secretTimer);
   if (secretTaps >= 5) {
@@ -856,7 +1088,8 @@ document.getElementById('secret-trigger').addEventListener('click', () => {
     return;
   }
   secretTimer = setTimeout(() => { secretTaps = 0; }, 2000);
-});
+}
+document.getElementById('secret-trigger').addEventListener('click', handleSecretTap);
 
 // ── ADMIN ──
 const pwModal = document.getElementById('pw-modal');
@@ -1128,6 +1361,204 @@ function navigateLbWithReset(dir) {
 }
 document.getElementById('lb-prev').onclick = () => navigateLbWithReset(-1);
 document.getElementById('lb-next').onclick = () => navigateLbWithReset(1);
+
+// ═══════════════════════════════════════════════════════════════
+// PREMIUM FEATURES
+// ═══════════════════════════════════════════════════════════════
+
+// ── 1. TYPEWRITER NAME ──
+// Types "Erick Gutierrez" character by character into the vertical name
+// on first load. Once typed, caret blinks 2 more times then hides.
+// Uses sessionStorage so it only runs once per session — refresh shows complete.
+const NAME = 'Erick Gutierrez';
+const nameText      = document.getElementById('name-text');
+const typeCaret     = document.getElementById('type-caret');
+const nameHorizontal= document.getElementById('name-horizontal');
+const nameHText     = document.getElementById('name-horizontal-text');
+const typeCaretH    = document.getElementById('type-caret-h');
+
+function typeInto(el, caret, text, charDelay = 90, onDone) {
+  el.textContent = '';
+  caret.classList.remove('hidden');
+  let i = 0;
+  function tick() {
+    if (i <= text.length) {
+      el.textContent = text.slice(0, i);
+      i++;
+      setTimeout(tick, charDelay);
+    } else {
+      // Let caret blink for ~1.4s after typing finishes, then hide
+      setTimeout(() => {
+        caret.classList.add('hidden');
+        if (onDone) onDone();
+      }, 1400);
+    }
+  }
+  setTimeout(tick, 200);
+}
+
+function deleteFrom(el, caret, onDone, charDelay = 25) {
+  caret.classList.remove('hidden');
+  let text = el.textContent;
+  function tick() {
+    if (text.length > 0) {
+      text = text.slice(0, -1);
+      el.textContent = text;
+      setTimeout(tick, charDelay);
+    } else {
+      if (onDone) onDone();
+    }
+  }
+  setTimeout(tick, 80);
+}
+
+// On first load, type. Subsequent loads in same session show complete.
+if (!sessionStorage.getItem('nameTyped')) {
+  typeInto(nameText, typeCaret, NAME, 90, () => {
+    sessionStorage.setItem('nameTyped', '1');
+  });
+} else {
+  nameText.textContent = NAME;
+  typeCaret.classList.add('hidden');
+}
+
+// ── 2. SCROLL-TRIGGERED FADE-INS ──
+// Each photo card fades in when entering viewport. Once per load (no repeat).
+const fadeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      fadeObserver.unobserve(entry.target);
+    }
+  });
+}, {
+  rootMargin: '0px 0px -50px 0px',
+  threshold: 0.05
+});
+document.querySelectorAll('.photo-card').forEach(card => {
+  fadeObserver.observe(card);
+});
+
+// ── 3. BLURRED PLACEHOLDERS ──
+// Wraps each img with a low-res blurred version that loads instantly,
+// then crossfades to the full image. Uses Cloudinary URL transforms for blur.
+function setupPlaceholders() {
+  document.querySelectorAll('.photo-card').forEach(card => {
+    const img = card.querySelector('img');
+    if (!img || !img.src) return;
+
+    // Build blur URL for Cloudinary images
+    let blurUrl = null;
+    if (img.src.includes('res.cloudinary.com')) {
+      // Insert /e_blur:2000,q_10,w_50/ after /upload/
+      blurUrl = img.src.replace('/upload/', '/upload/e_blur:2000,q_10,w_50/');
+    }
+
+    if (blurUrl) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'placeholder';
+      placeholder.style.backgroundImage = `url("${blurUrl}")`;
+      card.insertBefore(placeholder, img);
+    }
+
+    // Fade in when fully loaded
+    if (img.complete && img.naturalHeight !== 0) {
+      img.classList.add('loaded');
+      card.classList.add('loaded');
+    } else {
+      img.addEventListener('load', () => {
+        img.classList.add('loaded');
+        card.classList.add('loaded');
+      });
+      img.addEventListener('error', () => {
+        // If image fails, still show whatever placeholder exists
+        img.classList.add('loaded');
+        card.classList.add('loaded');
+      });
+    }
+  });
+}
+setupPlaceholders();
+
+// ── 5. ABOUT PAGE TOGGLE ──
+const aboutView = document.getElementById('about-view');
+const menuAboutBtn = document.getElementById('menu-about-btn');
+const leftStrip = document.getElementById('left-strip');
+let aboutOpen = false;
+
+function openAbout() {
+  if (aboutOpen) return;
+  aboutOpen = true;
+  menuAboutBtn.classList.add('active');
+
+  // Close the menu first
+  closeMobileMenu(true);
+
+  // Quick transition - users want to see /about fast
+  setTimeout(() => {
+    // Delete the vertical name (fast)
+    deleteFrom(nameText, typeCaret, () => {
+      // Hide the left strip name area
+      leftStrip.style.opacity = '0';
+      leftStrip.style.transition = 'opacity 0.3s ease';
+
+      // Show horizontal name container, then type into it (slightly faster than init)
+      nameHorizontal.classList.add('visible');
+      typeInto(nameHText, typeCaretH, NAME, 70);
+
+      // Show about view
+      aboutView.classList.add('visible');
+      // Show back button
+      aboutBack.classList.add('visible');
+    }, 25); // fast char delete
+  }, 150); // shorter wait for menu close
+}
+
+function closeAbout() {
+  if (!aboutOpen) return;
+  aboutOpen = false;
+  menuAboutBtn.classList.remove('active');
+
+  // Hide about view and back button first
+  aboutView.classList.remove('visible');
+  aboutBack.classList.remove('visible');
+
+  setTimeout(() => {
+    // Delete horizontal name (fast)
+    deleteFrom(nameHText, typeCaretH, () => {
+      nameHorizontal.classList.remove('visible');
+      typeCaretH.classList.add('hidden');
+
+      // Restore left strip
+      leftStrip.style.opacity = '';
+
+      // Re-type vertical name
+      typeInto(nameText, typeCaret, NAME, 70);
+    }, 25);
+  }, 400);
+}
+
+const aboutBack = document.getElementById('about-back');
+
+menuAboutBtn.addEventListener('click', () => {
+  if (aboutOpen) closeAbout();
+  else openAbout();
+});
+
+aboutBack.addEventListener('click', closeAbout);
+
+// Also close about when any category is tapped
+mobileCats.addEventListener('click', e => {
+  const btn = e.target.closest('.cat-btn');
+  if (!btn || btn.id === 'menu-about-btn' || btn.id === 'admin-cat-btn') return;
+  // If on about page, close it first then filter
+  if (aboutOpen) closeAbout();
+});
+
+// Tapping horizontal name returns to portfolio
+nameHorizontal.addEventListener('click', () => {
+  if (aboutOpen) closeAbout();
+});
 </script>
 </body>
 </html>
