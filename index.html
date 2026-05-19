@@ -32,6 +32,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Prevent double-tap-to-zoom on mobile - only lightbox should zoom */
+    touch-action: manipulation;
   }
   /* Premium scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -50,6 +52,35 @@
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     background-size: 200px 200px;
+  }
+
+  /* Scroll progress indicator — thin vertical line on left edge that fills as you scroll */
+  .scroll-progress {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 2px;
+    height: 100vh;
+    z-index: 41;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .scroll-progress.ready {
+    opacity: 1;
+  }
+  .scroll-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: rgba(255, 255, 255, 0.18);
+    transition: height 0.1s linear;
+  }
+  /* Hide on about page */
+  body.about-open .scroll-progress {
+    opacity: 0;
   }
 
   /* ═══════════════════════════════════════
@@ -214,7 +245,7 @@
     text-transform: uppercase;
     color: var(--soft);
     cursor: pointer;
-    padding: 0.28rem 0;
+    padding: 0.55rem 0;
     white-space: nowrap;
     opacity: 0;
     transform: translateY(8px);
@@ -223,6 +254,7 @@
     line-height: 1.2;
     pointer-events: none;
     -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
   }
   .cat-btn.active { color: var(--white); }
   .cat-btn:hover  { color: var(--white); }
@@ -235,12 +267,12 @@
     background: transparent; border: none;
     display: flex; flex-direction: column;
     align-items: flex-start; justify-content: center;
-    gap: 5px; cursor: pointer; padding: 0;
+    gap: 5px; cursor: pointer;
     position: fixed;
     left: 0;
-    width: 56px;
-    padding-left: 1rem;
-    bottom: calc(2rem + env(safe-area-inset-bottom));
+    width: 64px;
+    padding: 1rem 0 1rem 1rem;
+    bottom: calc(1.4rem + env(safe-area-inset-bottom));
     z-index: 45;
     -webkit-tap-highlight-color: transparent;
   }
@@ -297,14 +329,34 @@
     }
   }
 
-  /* When menu opens: dim photos gently, no layout restructure */
-  .feed.menu-open .photo-card {
-    opacity: 0.4;
-    pointer-events: none;
-    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  /* When menu opens: photos restructure into single column on the right
+     (film-roll effect) — still scrollable, just narrower and offset right */
+  .feed.menu-open {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.2rem !important;
+    align-items: flex-end !important;
+    transition: padding-right 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
-  .feed.menu-open .photo-card.visible {
-    opacity: 0.4;
+  .feed.menu-open .photo-card {
+    grid-column: unset !important;
+    max-width: 75% !important;
+    width: 75% !important;
+    transition: max-width 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (min-width: 768px) {
+    .feed.menu-open .photo-card {
+      max-width: 70% !important;
+      width: 70% !important;
+    }
+  }
+  @media (min-width: 1100px) {
+    .feed.menu-open .photo-card {
+      max-width: 65% !important;
+      width: 65% !important;
+    }
   }
 
   /* ── PHOTO CARD ──
@@ -546,9 +598,9 @@
   body.about-open {
     overflow: hidden;
   }
-  /* Hide hamburger and left strip while on about page */
+  /* Hide hamburger and cats while on about page.
+     Left-strip is controlled by JS so name deletion is visible. */
   body.about-open .left-hamburger,
-  body.about-open .left-strip,
   body.about-open .mobile-cats {
     opacity: 0;
     pointer-events: none;
@@ -673,12 +725,14 @@
     }
   }
   .cat-btn.menu-about {
-    margin-top: 1rem;
-    font-size: 0.8rem;
+    margin-top: 1.2rem;
+    font-size: 0.9rem;
     letter-spacing: 0.15em;
     color: var(--light);
     text-transform: lowercase;
     position: relative;
+    padding: 0.7rem 0;
+    min-height: 44px;
   }
   .cat-btn.menu-about::before {
     content: '→ ';
@@ -799,6 +853,11 @@
 <div class="left-strip-cover" id="left-strip-cover"></div>
 <div class="shell">
 
+  <!-- Scroll progress indicator -->
+  <div class="scroll-progress" id="scroll-progress">
+    <div class="scroll-progress-fill" id="scroll-progress-fill"></div>
+  </div>
+
   <!-- LEFT STRIP — name only (filled by typewriter on load) -->
   <div class="left-strip" id="left-strip">
     <span class="site-name-vertical" id="secret-trigger"><span id="name-text"></span><span class="type-caret" id="type-caret"></span></span>
@@ -844,9 +903,9 @@
 
     <main class="feed" id="gallery">
 
-      <!-- 1. NYPD officer B&W — emotional anchor, full-width hero -->
+      <!-- 1. Woman with dogs — full-width hero opener -->
       <div class="photo-card span-full" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0636_ngnctl.jpg" alt="untitled">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779069082/DSC_0516_joubc6.jpg" alt="untitled">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
@@ -855,9 +914,9 @@
         </div>
       </div>
 
-      <!-- 2. Scaffolding tunnel selective color — third column portrait, paired with pigeon man -->
+      <!-- 2. Scaffolding tunnel — third portrait, paired with book man -->
       <div class="photo-card span-third" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="portrait">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779078294/sidewalkimage2_qfvpic.png" alt="untitled">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779078294/sidewalkimage2_qfvpic.png" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
@@ -866,8 +925,19 @@
         </div>
       </div>
 
-      <!-- 3. Pigeon man — 2/3 width landscape, asymmetric pair with scaffolding -->
-      <div class="photo-card span-2-3" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
+      <!-- 3. Book man — 2/3 width, paired with scaffolding -->
+      <div class="photo-card span-2-3" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- 4. Pigeon man — half -->
+      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779063955/DSC_0433_wknneo.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
@@ -877,18 +947,7 @@
         </div>
       </div>
 
-      <!-- 4. Woman with dogs — half width landscape -->
-      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779069082/DSC_0516_joubc6.jpg" alt="untitled" loading="lazy">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <!-- 5. Escalator crowd B&W — half width landscape, pairs with woman with dogs -->
+      <!-- 5. Escalator crowd B&W — half, pairs with pigeon man -->
       <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0118_e88ntu.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
@@ -899,7 +958,7 @@
         </div>
       </div>
 
-      <!-- 6. Magic Gardens — 2/3 width landscape anchors left, paired with suited man -->
+      <!-- 6. Magic Gardens — 2/3, paired with suited man -->
       <div class="photo-card span-2-3" data-cat="detail" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0399_vgvdnk.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
@@ -910,7 +969,7 @@
         </div>
       </div>
 
-      <!-- 7. Suited man with truck and flowers — third width landscape -->
+      <!-- 7. Suited man — third, paired with Magic Gardens -->
       <div class="photo-card span-third" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0918_ksgpr6.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
@@ -921,18 +980,18 @@
         </div>
       </div>
 
-      <!-- 8. Book man — half width landscape -->
-      <div class="photo-card span-half" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled" loading="lazy">
+      <!-- 8. NYPD officer B&W — half -->
+      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0636_ngnctl.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
           <button class="admin-save-btn">Save</button>
         </div>
       </div>
 
-      <!-- 9. Chicago skybridge — half width landscape, paired with book man -->
+      <!-- 9. Chicago skybridge — half, paired with NYPD -->
       <div class="photo-card span-half" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0933_tjheg4.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
@@ -954,7 +1013,7 @@
         </div>
       </div>
 
-      <!-- 11. Philadelphia 2025 — half width landscape -->
+      <!-- 11. Philadelphia — half -->
       <div class="photo-card span-half" data-cat="street" data-caption="philadelphia - 2025" data-date="2025" data-aspect="landscape">
         <img src="https://live.staticflickr.com/65535/54761819820_518eb7e90c_b.jpg" alt="philadelphia - 2025" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">philadelphia - 2025</span></div>
@@ -965,7 +1024,7 @@
         </div>
       </div>
 
-      <!-- 12. No title — half width landscape -->
+      <!-- 12. No title — half -->
       <div class="photo-card span-half" data-cat="people" data-caption="no title" data-date="2025" data-aspect="landscape">
         <img src="https://live.staticflickr.com/65535/54761823980_4fdfff3a88_b.jpg" alt="no title" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">no title</span></div>
@@ -1042,11 +1101,19 @@ function measureCardWidth() {
   }
 }
 
-// Measure drawer panel target width = 75% of one photo column
+// Measure drawer panel target width — fixed reasonable size, not based on
+// asymmetric photo columns (which can be hugely variable in width).
 function measureDrawerWidth() {
-  const card = feed.querySelector('.photo-card:not(.hidden)');
-  const colW = card ? card.getBoundingClientRect().width : (feed.getBoundingClientRect().width / 2);
-  document.documentElement.style.setProperty('--drawer-w', Math.round(colW * 0.75) + 'px');
+  const vw = window.innerWidth;
+  let w;
+  if (vw < 768) {
+    w = 120; // mobile: narrow panel, leaves max room for photos
+  } else if (vw < 1100) {
+    w = 180; // tablet
+  } else {
+    w = 220; // desktop
+  }
+  document.documentElement.style.setProperty('--drawer-w', w + 'px');
 }
 
 // ── OPEN ──
@@ -1270,18 +1337,20 @@ function closeLb() {
   lb.style.transform = lb.style.opacity = '';
 }
 function navigateLb(dir) {
-  // Premium crossfade: fade out, swap content, fade in
-  // Reset any leftover transform from drag before fading
-  lbSlide.style.transform = 'translateX(0)';
+  // Fade out from wherever the slide currently is (could be mid-drag).
+  // This avoids the "snap back to center, then fade" flicker.
   lbSlide.style.transition = 'opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1)';
   lbSlide.style.opacity    = '0';
   lbIdx = (lbIdx + dir + lbCards.length) % lbCards.length;
   setTimeout(() => {
-    renderSlide(lbCards[lbIdx], lbSlide);
-    // Ensure transform is reset for the new content
+    // Now safely reset transform and render new content (invisible)
+    lbSlide.style.transition = 'none';
     lbSlide.style.transform = 'translateX(0)';
+    renderSlide(lbCards[lbIdx], lbSlide);
     lbSlide.style.opacity = '0';
+    // Fade in the new photo
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      lbSlide.style.transition = 'opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1)';
       lbSlide.style.opacity = '1';
     }));
   }, 320);
@@ -1408,10 +1477,8 @@ lb.addEventListener('touchend', e => {
 
   if (Math.abs(dx) >= Math.abs(dy)) {
     if (Math.abs(dx) > 50) {
-      // Reset slide position/opacity before navigation so new photo isn't cut off
-      lbSlide.style.transition = 'none';
-      lbSlide.style.transform = 'translateX(0)';
-      lbSlide.style.opacity = '1';
+      // Fade out from current dragged position (no snap-back flicker)
+      // navigateLb will handle the transform reset internally
       navigateLb(dx < 0 ? 1 : -1);
       resetZoom(false);
     }
@@ -1583,68 +1650,88 @@ function openAbout() {
   // Close the menu first
   closeMobileMenu(true);
 
-  // Quick transition - users want to see /about fast
   setTimeout(() => {
-    // Delete the vertical name (fast)
-    deleteFrom(nameText, typeCaret, () => {
-      // Hide the left strip name area
-      leftStrip.style.opacity = '0';
-      leftStrip.style.transition = 'opacity 0.3s ease';
+    // Step 1: Start fading in about-view (covers photos)
+    aboutView.classList.add('visible');
 
-      // Show horizontal name container, then type into it
-      nameHorizontal.classList.add('visible');
-      typeInto(nameHText, typeCaretH, NAME, 70);
+    // Step 2: Raise left-strip above about-view so name deletion is visible
+    leftStrip.style.zIndex = '105';
+    leftStrip.style.position = 'fixed';
 
-      // Show about view
-      aboutView.classList.add('visible');
-      // Show back button and type "← back" — caret keeps blinking forever
-      aboutBack.classList.add('visible');
-      typeBackButton();
-    }, 25);
+    // Step 3: Delete the vertical name (visible against the black background)
+    setTimeout(() => {
+      deleteFrom(nameText, typeCaret, () => {
+        // Hide the left strip after deletion completes
+        leftStrip.style.opacity = '0';
+        leftStrip.style.transition = 'opacity 0.3s ease';
+
+        // Restore z-index after fade
+        setTimeout(() => {
+          leftStrip.style.zIndex = '';
+        }, 300);
+
+        // Type horizontal name in the top right
+        nameHorizontal.classList.add('visible');
+        typeInto(nameHText, typeCaretH, NAME, 70);
+
+        // Show back button with typewriter
+        aboutBack.classList.add('visible');
+        typeBackButton();
+      }, 25);
+    }, 400); // wait for about-view to be mostly opaque
   }, 150);
 }
 
 // Type "← back" into back button — caret never hides (keeps blinking)
+// Synced to finish at same time as horizontal name typing.
 function typeBackButton() {
   const backText = document.getElementById('back-text');
   backText.textContent = '';
   const fullText = '← back';
+  // Match the name's character rate (70ms/char), and delay the start
+  // so both finish at the same moment.
+  // Name = 15 chars × 70ms = 1050ms. Back = 6 chars × 70ms = 420ms.
+  // Delay back start by (1050 - 420) = 630ms so they finish together.
+  const charDelay = 70;
+  const startDelay = (NAME.length - fullText.length) * charDelay;
   let i = 0;
   function tick() {
     if (i <= fullText.length) {
       backText.textContent = fullText.slice(0, i);
       i++;
-      setTimeout(tick, 80);
+      setTimeout(tick, charDelay);
     }
   }
-  setTimeout(tick, 400); // small pause after about view appears
+  setTimeout(tick, startDelay);
 }
 
 function closeAbout() {
   if (!aboutOpen) return;
   aboutOpen = false;
   menuAboutBtn.classList.remove('active');
-  document.body.classList.remove('about-open');
 
-  // Hide about view and back button first
-  aboutView.classList.remove('visible');
+  // Hide back button immediately
   aboutBack.classList.remove('visible');
-  // Clear back button text so it retypes fresh next time
   document.getElementById('back-text').textContent = '';
 
-  setTimeout(() => {
-    // Delete horizontal name (fast)
-    deleteFrom(nameHText, typeCaretH, () => {
-      nameHorizontal.classList.remove('visible');
-      typeCaretH.classList.add('hidden');
+  // Step 1: Delete horizontal name FIRST while about-view is still fully visible
+  // (so the deletion doesn't show over photos)
+  deleteFrom(nameHText, typeCaretH, () => {
+    nameHorizontal.classList.remove('visible');
+    typeCaretH.classList.add('hidden');
 
-      // Restore left strip
+    // Step 2: Now fade out about-view (photos still hidden behind it)
+    aboutView.classList.remove('visible');
+
+    // Step 3: After about-view finishes fading, restore left strip + retype vertical name
+    setTimeout(() => {
+      document.body.classList.remove('about-open');
       leftStrip.style.opacity = '';
-
-      // Re-type vertical name
+      leftStrip.style.zIndex = '';
+      leftStrip.style.position = '';
       typeInto(nameText, typeCaret, NAME, 70);
-    }, 25);
-  }, 400);
+    }, 500);
+  }, 25);
 }
 
 const aboutBack = document.getElementById('about-back');
@@ -1676,6 +1763,31 @@ mobileCats.addEventListener('click', e => {
 nameHorizontal.addEventListener('click', () => {
   if (aboutOpen) closeAbout();
 });
+
+// ── SCROLL PROGRESS INDICATOR ──
+// Thin vertical line on the left that fills as user scrolls.
+const scrollProgress = document.getElementById('scroll-progress');
+const scrollProgressFill = document.getElementById('scroll-progress-fill');
+
+function updateScrollProgress() {
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  if (docHeight <= 0) {
+    scrollProgressFill.style.height = '0%';
+    return;
+  }
+  const scrolled = window.scrollY / docHeight;
+  scrollProgressFill.style.height = (scrolled * 100) + '%';
+}
+
+// Fade in the indicator after the typewriter intro (or instantly if no intro)
+const initialDelay = sessionStorage.getItem('nameTyped') ? 100 : 1800;
+setTimeout(() => {
+  scrollProgress.classList.add('ready');
+  updateScrollProgress();
+}, initialDelay);
+
+window.addEventListener('scroll', updateScrollProgress, { passive: true });
+window.addEventListener('resize', updateScrollProgress, { passive: true });
 </script>
 </body>
 </html>
