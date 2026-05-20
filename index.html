@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Erick Gutierrez</title>
+<title>erick gutierrez</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Georgia, serif' font-size='28' font-weight='300' letter-spacing='2' fill='%23fff'%3Eeg%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Georgia, serif' font-size='78' font-weight='300' letter-spacing='6' fill='%23fff'%3Eeg%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -459,6 +461,90 @@
       transform: scale(1.03);
     }
   }
+  /* ─── PHOTO INDEX & ROLL DATE MARKER ───
+     Bottom-right of each photo: archive-style metadata.
+     Style: monospace, low-opacity white, like a film negative label */
+  .photo-meta {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    z-index: 3;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.4;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.6s;
+  }
+  .photo-card.visible .photo-meta {
+    opacity: 1;
+  }
+  /* Hide meta when hovering (let the caption have the moment) */
+  @media (hover: hover) {
+    .photo-card:hover .photo-meta {
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+    }
+  }
+  .photo-meta-index {
+    display: block;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* ─── VIEWFINDER BRACKETS ───
+     Four L-shaped corner brackets that draw in when photo enters viewport.
+     Like a camera viewfinder focusing on the subject. Then fade away. */
+  .viewfinder-brackets {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0;
+  }
+  .photo-card.visible .viewfinder-brackets {
+    animation: viewfinder-pulse 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+  .viewfinder-brackets::before,
+  .viewfinder-brackets::after,
+  .viewfinder-brackets > span::before,
+  .viewfinder-brackets > span::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: rgba(255, 255, 255, 0.85);
+    border-style: solid;
+    border-width: 0;
+  }
+  .viewfinder-brackets::before {
+    top: 8px; left: 8px;
+    border-top-width: 1px; border-left-width: 1px;
+  }
+  .viewfinder-brackets::after {
+    top: 8px; right: 8px;
+    border-top-width: 1px; border-right-width: 1px;
+  }
+  .viewfinder-brackets > span::before {
+    bottom: 8px; left: 8px;
+    border-bottom-width: 1px; border-left-width: 1px;
+  }
+  .viewfinder-brackets > span::after {
+    bottom: 8px; right: 8px;
+    border-bottom-width: 1px; border-right-width: 1px;
+  }
+  @keyframes viewfinder-pulse {
+    0%   { opacity: 0; transform: scale(1.05); }
+    35%  { opacity: 1; transform: scale(1); }
+    65%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+
   .photo-overlay {
     position: absolute;
     left: 0;
@@ -584,11 +670,242 @@
     z-index: 100;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-left: 22vw;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     overflow: hidden;
+  }
+  @media (max-width: 767px) {
+    .about-view {
+      justify-content: center;
+      padding-left: 0;
+    }
+  }
+  .about-view.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* SVG canvas (kept for layout, but not used for line drawing anymore) */
+  .kinetype-svg {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 108;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .kinetype-svg.active {
+    opacity: 1;
+  }
+
+  /* ASCII Hook — pre-positioned characters that appear one by one */
+  .ascii-hook {
+    position: fixed;
+    z-index: 108;
+    pointer-events: none;
+    font-family: 'Courier New', monospace;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1;
+    user-select: none;
+    font-weight: 400;
+  }
+  .ascii-hook-char {
+    display: inline-block;
+    opacity: 0;
+    transition: opacity 0.05s ease;
+  }
+  .ascii-hook-char.on {
+    opacity: 1;
+  }
+  .ascii-hook-char.off {
+    opacity: 0;
+    transition: opacity 0.1s ease;
+  }
+  /* Vertical segment uses block display */
+  .ascii-hook-vertical {
+    position: absolute;
+  }
+  .ascii-hook-vertical .ascii-hook-char {
+    display: block;
+  }
+
+  /* Floating ERICK — gets reeled in along the hook path */
+  .erick-flyer {
+    position: fixed;
+    z-index: 109;
+    pointer-events: none;
+    font-family: 'Courier New', monospace;
+    color: var(--white);
+    line-height: 1;
+    user-select: none;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+  .erick-flyer.vertical {
+    line-height: 1.1;
+    letter-spacing: 0.05em;
+  }
+  .erick-flyer.vertical .erick-letter {
+    display: block;
+  }
+  .erick-letter {
+    display: inline-block;
+  }
+
+  /* "i'm" that gets appended after "hi," */
+  .about-im {
+    color: var(--white);
+    font-family: 'Courier New', monospace;
+  }
+  /* Block cursor — terminal-style inverted block.
+     Two states alternate to create the blink:
+       State A (hollow): plain ">" character in white
+       State B (filled): white rectangle covering the >, with > shown in black
+     Used throughout the entire kinetype sequence as the single active cursor. */
+  .about-im-caret {
+    display: inline-block;
+    position: relative;
+    color: var(--white);
+    font-family: 'Courier New', monospace;
+    font-weight: 400;
+    font-size: 1em;
+    line-height: 1;
+    vertical-align: baseline;
+    width: 0.62em;
+    height: 1em;
+    margin-left: 1px;
+    opacity: 0;
+  }
+  /* Hollow ">" character — always present underneath */
+  .about-im-caret::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--white);
+    font-family: 'Courier New', monospace;
+    z-index: 1;
+  }
+  /* Inverted block layer — white background + black > on top */
+  .about-im-caret::after {
+    content: '>';
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    width: 0.62em;
+    height: 0.95em;
+    background: var(--white);
+    color: var(--bg);
+    font-family: 'Courier New', monospace;
+    text-align: left;
+    line-height: 0.95em;
+    opacity: 0;
+    z-index: 2;
+  }
+  .about-im-caret.visible {
+    opacity: 1;
+  }
+  /* When visible: alternate which layer shows (blink swaps between hollow and inverted) */
+  .about-im-caret.visible::before {
+    animation: caret-hollow 0.9s steps(2) infinite;
+  }
+  .about-im-caret.visible::after {
+    animation: caret-inverted 0.9s steps(2) infinite;
+  }
+  @keyframes caret-hollow {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  @keyframes caret-inverted {
+    0%, 49% { opacity: 0; }
+    50%, 100% { opacity: 1; }
+  }
+  /* Solid state — used while it "becomes" the hook (no blink, hollow only) */
+  .about-im-caret.solid {
+    opacity: 1;
+  }
+  .about-im-caret.solid::before {
+    animation: none;
+    opacity: 1;
+  }
+  .about-im-caret.solid::after {
+    animation: none;
+    opacity: 0;
+  }
+  .about-im-caret.gone {
+    display: none;
+  }
+
+  /* Final caret after ERICK lands — uses same dual-state styling */
+  .about-final-caret {
+    display: inline-block;
+    position: relative;
+    color: var(--white);
+    font-family: 'Courier New', monospace;
+    font-weight: 400;
+    font-size: 1em;
+    line-height: 1;
+    vertical-align: baseline;
+    width: 0.62em;
+    height: 1em;
+    margin-left: 4px;
+    opacity: 0;
+  }
+  .about-final-caret::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--white);
+    z-index: 1;
+  }
+  .about-final-caret::after {
+    content: '>';
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    width: 0.62em;
+    height: 0.95em;
+    background: var(--white);
+    color: var(--bg);
+    text-align: left;
+    line-height: 0.95em;
+    opacity: 0;
+    z-index: 2;
+  }
+  .about-final-caret.visible {
+    opacity: 1;
+  }
+  .about-final-caret.visible::before {
+    animation: caret-hollow 0.9s steps(2) infinite;
+  }
+  .about-final-caret.visible::after {
+    animation: caret-inverted 0.9s steps(2) infinite;
+  }
+  /* "hi," typing target */
+  .about-hi {
+    color: var(--white);
+    font-family: 'Courier New', monospace;
+  }
+  /* ERICK inline slot — keeps top-right styling (uppercase, letter-spaced, larger) */
+  .about-erick-slot {
+    color: var(--white);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-size: 1.2rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-left: 0;
+    margin-right: 0.2em;
+  }
+  @media (min-width: 768px) {
+    .about-erick-slot { font-size: 1.3rem; }
   }
   .about-view.visible {
     opacity: 1;
@@ -607,38 +924,76 @@
     transition: opacity 0.3s ease;
   }
   .about-content {
-    text-align: center;
+    text-align: left;
     padding: 2rem;
-    max-width: 600px;
+    max-width: 540px;
+    width: 100%;
+    font-family: 'Courier New', monospace;
+  }
+  /* All text in about page same uniform size - like a terminal output */
+  .about-greeting {
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--white);
+    line-height: 1.55;
+    margin-bottom: 1.6rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.02em;
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s;
+  }
+  .about-view.visible .about-greeting {
+    opacity: 1;
   }
   .about-text {
-    font-size: 1.4rem;
-    font-weight: 300;
-    letter-spacing: 0.04em;
-    color: var(--light);
-    line-height: 1.5;
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--white);
+    line-height: 1.55;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 1.6rem;
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s,
-                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s,
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s;
   }
   .about-view.visible .about-text {
     opacity: 1;
     transform: translateY(0);
   }
-  .about-sub {
-    font-size: 0.75rem;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    margin-top: 2rem;
+  .about-gear {
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--white);
+    line-height: 1.55;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 2.2rem;
     opacity: 0;
-    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s;
+    transform: translateY(20px);
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s,
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s;
+  }
+  .about-view.visible .about-gear {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .about-sub {
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--white);
+    line-height: 1.55;
+    font-family: 'Courier New', monospace;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.85s;
   }
   .about-view.visible .about-sub {
     opacity: 1;
   }
   .about-link {
-    color: var(--soft);
+    color: var(--white);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: color 0.3s, border-bottom-color 0.3s;
@@ -697,11 +1052,16 @@
     }
   }
   @media (min-width: 768px) {
-    .about-text { font-size: 2.4rem; }
-    .about-sub { font-size: 0.9rem; margin-top: 2.5rem; }
+    .about-greeting,
+    .about-text,
+    .about-gear,
+    .about-sub { font-size: 1rem; }
   }
   @media (min-width: 1100px) {
-    .about-text { font-size: 2.8rem; }
+    .about-greeting,
+    .about-text,
+    .about-gear,
+    .about-sub { font-size: 1.05rem; }
   }
 
   /* ── LANDSCAPE ORIENTATION FIX ──
@@ -870,8 +1230,10 @@
   <div class="about-view" id="about-view">
     <button class="about-back" id="about-back"><span id="back-text"></span><span class="back-caret"></span></button>
     <div class="about-content">
-      <p class="about-text">Photographer based in South Jersey</p>
-      <p class="about-sub"><a href="mailto:contact@erickgutierrez.xyz" class="about-link">contact@erickgutierrez.xyz</a> · 2026</p>
+      <p class="about-greeting"><span class="about-hi" id="about-hi"></span><span class="about-im" id="about-im"></span><span class="about-im-caret" id="about-im-caret">&gt;</span><span class="about-erick-slot" id="about-erick-slot"></span><span class="about-final-caret" id="about-final-caret">&gt;</span></p>
+      <p class="about-text">this site is just a place where i can share photos with friends and family.</p>
+      <p class="about-gear">shot mainly on a 50mm — manual focus.</p>
+      <p class="about-sub">last updated: may.18.26<br><a href="mailto:contact@erickgutierrez.xyz" class="about-link">contact@erickgutierrez.xyz</a></p>
     </div>
   </div>
 
@@ -903,7 +1265,7 @@
 
     <main class="feed" id="gallery">
 
-      <!-- ROW 1 — Lady with dogs (2/3) + Scaffolding portrait (third) -->
+      <!-- ROW 1: Lady with dogs (2/3) + Scaffolding portrait (1/3) -->
       <div class="photo-card span-2-3" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
         <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779069082/DSC_0516_joubc6.jpg" alt="untitled">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
@@ -924,9 +1286,9 @@
         </div>
       </div>
 
-      <!-- ROW 2 — Suited man (half) + Pigeon man (half) -->
+      <!-- ROW 2: Book man (1/2) + Pigeon man (1/2) -->
       <div class="photo-card span-half" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0918_ksgpr6.jpg" alt="untitled" loading="lazy">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0636_ngnctl.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
@@ -945,51 +1307,9 @@
         </div>
       </div>
 
-      <!-- ROW 3 — NYPD officer (2/3) + Book man (third) -->
-      <div class="photo-card span-2-3" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0636_ngnctl.jpg" alt="untitled" loading="lazy">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card span-third" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled" loading="lazy">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <!-- ROW 4 — Escalator B&W (half) + Chicago (half) -->
-      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0118_e88ntu.jpg" alt="untitled" loading="lazy">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <div class="photo-card span-half" data-cat="detail" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0399_vgvdnk.jpg" alt="untitled" loading="lazy">
-        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
-        <div class="admin-overlay">
-          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
-          <select class="admin-cat-select"><option value="street">Street</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
-          <button class="admin-save-btn">Save</button>
-        </div>
-      </div>
-
-      <!-- ROW 5 — Chicago skybridge (2/3) + Miniature room (third) -->
+      <!-- ROW 3: Chicago skybridge (2/3) + Miniature room (1/3) -->
       <div class="photo-card span-2-3" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0933_tjheg4.jpg" alt="untitled" loading="lazy">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0679_tyakb3.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
@@ -999,7 +1319,7 @@
       </div>
 
       <div class="photo-card span-third" data-cat="detail" data-caption="untitled" data-date="2025" data-aspect="landscape">
-        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075104/DSC_0679_tyakb3.jpg" alt="untitled" loading="lazy">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0399_vgvdnk.jpg" alt="untitled" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
         <div class="admin-overlay">
           <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
@@ -1008,8 +1328,50 @@
         </div>
       </div>
 
-      <!-- ROW 6 — Philadelphia (half) + No title (half) -->
-      <div class="photo-card span-half" data-cat="street" data-caption="philadelphia - 2025" data-date="2025" data-aspect="landscape">
+      <!-- ROW 4: Escalator B&W (1/3) + Magic Gardens (2/3) -->
+      <div class="photo-card span-third" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0933_tjheg4.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card span-2-3" data-cat="detail" data-caption="untitled" data-date="2025" data-aspect="landscape">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075344/DSC_0118_e88ntu.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail" selected>Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- ROW 5: NYPD officer (1/2) + Suited man (1/2) -->
+      <div class="photo-card span-half" data-cat="people" data-caption="untitled" data-date="2025" data-aspect="landscape">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0918_ksgpr6.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street">Street</option><option value="detail">Details</option><option value="people" selected>People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="photo-card span-half" data-cat="street" data-caption="untitled" data-date="2025" data-aspect="landscape">
+        <img src="https://res.cloudinary.com/dvs3rfiws/image/upload/v1779075103/DSC_0917_zhlnwm.jpg" alt="untitled" loading="lazy">
+        <div class="photo-overlay"><span class="photo-caption">untitled</span></div>
+        <div class="admin-overlay">
+          <input class="admin-caption-input" type="text" placeholder="caption" value="untitled">
+          <select class="admin-cat-select"><option value="street" selected>Street</option><option value="detail">Details</option><option value="people">People</option><option value="all">Untagged</option></select>
+          <button class="admin-save-btn">Save</button>
+        </div>
+      </div>
+
+      <!-- ROW 6: Philadelphia (1/3 portrait) + No title (2/3 portrait) -->
+      <div class="photo-card span-third" data-cat="street" data-caption="philadelphia - 2025" data-date="2025" data-aspect="portrait">
         <img src="https://live.staticflickr.com/65535/54761819820_518eb7e90c_b.jpg" alt="philadelphia - 2025" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">philadelphia - 2025</span></div>
         <div class="admin-overlay">
@@ -1019,7 +1381,7 @@
         </div>
       </div>
 
-      <div class="photo-card span-half" data-cat="people" data-caption="no title" data-date="2025" data-aspect="landscape">
+      <div class="photo-card span-2-3" data-cat="people" data-caption="no title" data-date="2025" data-aspect="portrait">
         <img src="https://live.staticflickr.com/65535/54761823980_4fdfff3a88_b.jpg" alt="no title" loading="lazy">
         <div class="photo-overlay"><span class="photo-caption">no title</span></div>
         <div class="admin-overlay">
@@ -1629,6 +1991,29 @@ function setupPlaceholders() {
 }
 setupPlaceholders();
 
+// ── 4. PHOTO META MARKERS — shot.01, shot.02 style ──
+// Inject archive-style index into each card (no dates, just shot numbers).
+// Also add the viewfinder bracket element for the entry animation.
+function setupPhotoMeta() {
+  const cards = document.querySelectorAll('.photo-card');
+  cards.forEach((card, i) => {
+    const idx = String(i + 1).padStart(2, '0');
+
+    // Photo meta marker — bottom right
+    const meta = document.createElement('div');
+    meta.className = 'photo-meta';
+    meta.innerHTML = `<span class="photo-meta-index">shot.${idx}</span>`;
+    card.appendChild(meta);
+
+    // Viewfinder brackets — animates in when photo becomes visible
+    const brackets = document.createElement('div');
+    brackets.className = 'viewfinder-brackets';
+    brackets.innerHTML = '<span></span>';
+    card.appendChild(brackets);
+  });
+}
+setupPhotoMeta();
+
 // ── 5. ABOUT PAGE TOGGLE ──
 const aboutView = document.getElementById('about-view');
 const menuAboutBtn = document.getElementById('menu-about-btn');
@@ -1649,31 +2034,496 @@ function openAbout() {
     aboutView.classList.add('visible');
 
     // Step 2: Raise left-strip above about-view so name deletion is visible
+    // Also remove its solid black background so it doesn't cover about content
     leftStrip.style.zIndex = '105';
     leftStrip.style.position = 'fixed';
+    leftStrip.style.background = 'transparent';
+    leftStrip.style.width = 'auto';
 
-    // Step 3: Delete the vertical name (visible against the black background)
+    // Step 3: Delete the vertical name (visible against the black about background)
     setTimeout(() => {
       deleteFrom(nameText, typeCaret, () => {
         // Hide the left strip after deletion completes
         leftStrip.style.opacity = '0';
         leftStrip.style.transition = 'opacity 0.3s ease';
 
-        // Restore z-index after fade
+        // Restore z-index/background after fade
         setTimeout(() => {
           leftStrip.style.zIndex = '';
+          leftStrip.style.background = '';
+          leftStrip.style.width = '';
         }, 300);
 
-        // Type horizontal name in the top right
+        // Type horizontal name in the top right (faster)
         nameHorizontal.classList.add('visible');
-        typeInto(nameHText, typeCaretH, NAME, 70);
+        typeInto(nameHText, typeCaretH, NAME, 40);
 
         // Show back button with typewriter
         aboutBack.classList.add('visible');
         typeBackButton();
+
+        // After everything is settled, kick off the kinetype sequence
+        // Name takes 15 * 40 = 600ms to type + 700ms pause
+        setTimeout(() => {
+          if (aboutOpen) runKinetypeSequence();
+        }, 600 + 700);
       }, 25);
-    }, 400); // wait for about-view to be mostly opaque
+    }, 400);
   }, 150);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KINETYPE SEQUENCE — v4: char shift reel-in
+//
+// The cursor (about-im-caret) is the only cursor used.
+// Hook is built from randomized characters using -, =, ~, |, :, +.
+// During reel-in, the leftmost char disappears and the rest shift left,
+// pulling ERICK + > along with them toward "hi, i'm".
+// ═══════════════════════════════════════════════════════════════════
+
+const HOOK_CHAR_W = 14;
+const HOOK_CHAR_H = 18;
+const HOOK_FONT_PX = 18;
+const TYPE_SPEED = 25;
+const DELETE_SPEED = 30;
+const HOOK_DRAW_SPEED = 40;
+const HOOK_RETRACT_SPEED = 45;
+
+const HORIZ_CHARS = ['-', '=', '~'];
+const VERT_CHARS = ['|', ':'];
+const CORNER_CHAR = '+';
+
+function randChar(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+let hookChars = [];  // {el, type, gridX, gridY}
+let leadArrow = null;
+let erickFlyer = null;
+
+function runKinetypeSequence() {
+  const aboutHi = document.getElementById('about-hi');
+  const aboutIm = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot = document.getElementById('about-erick-slot');
+  const finalCaret = document.getElementById('about-final-caret');
+
+  aboutImCaret.classList.add('visible');
+
+  // PHASE 0: Type "hi,"
+  const hiText = 'hi,';
+  let hi_i = 0;
+  function typeHi() {
+    if (hi_i <= hiText.length) {
+      aboutHi.textContent = hiText.slice(0, hi_i);
+      hi_i++;
+      setTimeout(typeHi, TYPE_SPEED);
+    } else {
+      setTimeout(typeIm, 400);
+    }
+  }
+  typeHi();
+
+  // PHASE 1: Type " i'm "
+  const imText = " i'm ";
+  let im_i = 0;
+  function typeIm() {
+    if (im_i <= imText.length) {
+      aboutIm.textContent = imText.slice(0, im_i);
+      im_i++;
+      setTimeout(typeIm, TYPE_SPEED);
+    } else {
+      setTimeout(phase2_deleteGutierrez, 500);
+    }
+  }
+
+  function phase2_deleteGutierrez() {
+    if (!aboutOpen) return;
+    const targetLength = 5;
+    function tickDelete() {
+      const current = nameHText.textContent;
+      if (current.length > targetLength) {
+        nameHText.textContent = current.slice(0, -1);
+        setTimeout(tickDelete, DELETE_SPEED);
+      } else {
+        typeCaretH.style.display = 'none';
+        setTimeout(phase3_drawHook, 450);
+      }
+    }
+    tickDelete();
+  }
+
+  function phase3_drawHook() {
+    if (!aboutOpen) return;
+
+    aboutImCaret.classList.remove('visible');
+    aboutImCaret.classList.add('solid');
+
+    const caretRect = aboutImCaret.getBoundingClientRect();
+    const erickRect = nameHText.getBoundingClientRect();
+
+    const startX = caretRect.right + 2;
+    const startY = caretRect.top + caretRect.height / 2;
+    const endX = erickRect.left - 4;
+    const endY = erickRect.top + erickRect.height / 2;
+
+    aboutImCaret.style.opacity = '0';
+
+    const turnX = startX + 80;
+    const horizDist1 = turnX - startX;
+    const vertDist = startY - endY;
+    const horizDist2 = endX - turnX;
+
+    const seg1Chars = Math.max(3, Math.floor(horizDist1 / HOOK_CHAR_W));
+    const seg2Chars = Math.max(3, Math.floor(vertDist / HOOK_CHAR_H));
+    const seg3Chars = Math.max(3, Math.floor(horizDist2 / HOOK_CHAR_W));
+
+    hookChars = [];
+    const container = document.createElement('div');
+    container.className = 'ascii-hook';
+    container.style.fontSize = HOOK_FONT_PX + 'px';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.id = 'ascii-hook-container';
+    document.body.appendChild(container);
+
+    const seg1EndX = startX + seg1Chars * HOOK_CHAR_W;
+    const seg2X = seg1EndX;
+    const seg2EndY = startY - seg2Chars * HOOK_CHAR_H;
+    const seg3StartX = seg2X;
+
+    // Segment 1: horizontal (going RIGHT from caret)
+    for (let i = 0; i < seg1Chars; i++) {
+      const span = document.createElement('span');
+      span.className = 'ascii-hook-char';
+      span.textContent = randChar(HORIZ_CHARS);
+      span.style.position = 'fixed';
+      span.style.left = (startX + i * HOOK_CHAR_W) + 'px';
+      span.style.top = (startY - HOOK_FONT_PX / 2) + 'px';
+      container.appendChild(span);
+      hookChars.push({ el: span, seg: 1 });
+    }
+
+    // Corner 1: bottom-right corner (where seg1 meets seg2)
+    const cornerBR = document.createElement('span');
+    cornerBR.className = 'ascii-hook-char';
+    cornerBR.textContent = CORNER_CHAR;
+    cornerBR.style.position = 'fixed';
+    cornerBR.style.left = seg2X + 'px';
+    cornerBR.style.top = (startY - HOOK_FONT_PX / 2) + 'px';
+    container.appendChild(cornerBR);
+    hookChars.push({ el: cornerBR, seg: 'corner1' });
+
+    // Segment 2: vertical (going UP)
+    for (let i = 0; i < seg2Chars; i++) {
+      const span = document.createElement('span');
+      span.className = 'ascii-hook-char';
+      span.textContent = randChar(VERT_CHARS);
+      span.style.position = 'fixed';
+      span.style.left = (seg2X) + 'px';
+      span.style.top = (startY - (i + 1) * HOOK_CHAR_H) + 'px';
+      container.appendChild(span);
+      hookChars.push({ el: span, seg: 2 });
+    }
+
+    // Corner 2: top-right corner (where seg2 meets seg3)
+    const cornerTR = document.createElement('span');
+    cornerTR.className = 'ascii-hook-char';
+    cornerTR.textContent = CORNER_CHAR;
+    cornerTR.style.position = 'fixed';
+    cornerTR.style.left = seg2X + 'px';
+    cornerTR.style.top = (seg2EndY - HOOK_FONT_PX / 2) + 'px';
+    container.appendChild(cornerTR);
+    hookChars.push({ el: cornerTR, seg: 'corner2' });
+
+    // Segment 3: horizontal (going RIGHT toward ERICK)
+    for (let i = 0; i < seg3Chars; i++) {
+      const span = document.createElement('span');
+      span.className = 'ascii-hook-char';
+      span.textContent = randChar(HORIZ_CHARS);
+      span.style.position = 'fixed';
+      span.style.left = (seg3StartX + (i + 1) * HOOK_CHAR_W) + 'px';
+      span.style.top = (seg2EndY - HOOK_FONT_PX / 2) + 'px';
+      container.appendChild(span);
+      hookChars.push({ el: span, seg: 3 });
+    }
+
+    // Leading > at very end
+    leadArrow = document.createElement('span');
+    leadArrow.className = 'ascii-hook-char';
+    leadArrow.textContent = '>';
+    leadArrow.style.position = 'fixed';
+    leadArrow.style.left = (seg3StartX + (seg3Chars + 1) * HOOK_CHAR_W) + 'px';
+    leadArrow.style.top = (seg2EndY - HOOK_FONT_PX / 2) + 'px';
+    container.appendChild(leadArrow);
+
+    // Draw chars one at a time
+    let drawIdx = 0;
+    function drawNext() {
+      if (drawIdx >= hookChars.length) {
+        // Show the leading > last
+        leadArrow.classList.add('on');
+        setTimeout(phase4_reelIn, 500);
+        return;
+      }
+      hookChars[drawIdx].el.classList.add('on');
+      drawIdx++;
+      setTimeout(drawNext, HOOK_DRAW_SPEED);
+    }
+    drawNext();
+  }
+
+  function phase4_reelIn() {
+    if (!aboutOpen) return;
+
+    // Hide top-right ERICK and create flyer matching its style
+    nameHText.style.visibility = 'hidden';
+    const erickComputed = window.getComputedStyle(nameHText);
+
+    erickFlyer = document.createElement('div');
+    erickFlyer.className = 'erick-flyer';
+    erickFlyer.style.fontFamily = erickComputed.fontFamily;
+    erickFlyer.style.fontSize = erickComputed.fontSize;
+    erickFlyer.style.fontWeight = erickComputed.fontWeight;
+    erickFlyer.style.letterSpacing = erickComputed.letterSpacing;
+    erickFlyer.style.textTransform = 'uppercase';
+    erickFlyer.style.color = 'white';
+    erickFlyer.textContent = 'ERICK';
+
+    // Position ERICK just BEFORE the leading > (between the line and >)
+    const arrowRect = leadArrow.getBoundingClientRect();
+    document.body.appendChild(erickFlyer);
+    const flyerRect = erickFlyer.getBoundingClientRect();
+
+    // ERICK sits just LEFT of the leading > arrow
+    let erickX = arrowRect.left - flyerRect.width - 4;
+    let erickY = arrowRect.top - (flyerRect.height - arrowRect.height) / 2;
+    erickFlyer.style.left = erickX + 'px';
+    erickFlyer.style.top = erickY + 'px';
+
+    let arrowX = arrowRect.left;
+    let arrowY = arrowRect.top;
+
+    // Reel in step: remove leftmost char + shift ALL remaining chars + ERICK + > left/down
+    let removeIdx = 0;
+    const allChars = hookChars; // ordered: seg1, corner1, seg2, corner2, seg3
+    const totalChars = allChars.length;
+
+    function retractStep() {
+      if (removeIdx >= totalChars) {
+        // Done
+        phase5_land();
+        return;
+      }
+      const c = allChars[removeIdx];
+
+      // Fade out the leftmost char
+      c.el.classList.add('off');
+      c.el.classList.remove('on');
+
+      // Determine shift direction based on the segment of the char we're removing
+      // - seg1 chars: removing pulls everything LEFT (toward hi, i'm)
+      // - corner1: same as seg2 (pull DOWN to enter seg1)
+      // - seg2: pull DOWN
+      // - corner2: same as seg3 (pull LEFT to enter seg2 top)
+      // - seg3: pull LEFT
+
+      let shiftX = 0, shiftY = 0;
+      if (c.seg === 1) {
+        shiftX = -HOOK_CHAR_W;
+      } else if (c.seg === 'corner1') {
+        // Removing the corner means the hook is collapsing into the bottom segment
+        shiftY = HOOK_CHAR_H;
+      } else if (c.seg === 2) {
+        shiftY = HOOK_CHAR_H;
+      } else if (c.seg === 'corner2') {
+        shiftX = -HOOK_CHAR_W;
+      } else if (c.seg === 3) {
+        shiftX = -HOOK_CHAR_W;
+      }
+
+      // Apply shift to ALL remaining chars (from removeIdx+1 onward)
+      // For the vertical segment, when we remove a vertical char, the chars ABOVE it shift down.
+      // Actually the cleanest way: walk the remaining chars and re-position them by accumulated shift.
+      // Simpler: each remaining char + ERICK + leadArrow gets the shiftX/shiftY applied to its current position.
+      for (let k = removeIdx + 1; k < totalChars; k++) {
+        const ch = allChars[k];
+        const left = parseFloat(ch.el.style.left);
+        const top = parseFloat(ch.el.style.top);
+        ch.el.style.left = (left + shiftX) + 'px';
+        ch.el.style.top = (top + shiftY) + 'px';
+      }
+      // Shift the lead arrow + ERICK
+      arrowX += shiftX;
+      arrowY += shiftY;
+      leadArrow.style.left = arrowX + 'px';
+      leadArrow.style.top = arrowY + 'px';
+      erickX += shiftX;
+      erickY += shiftY;
+      erickFlyer.style.left = erickX + 'px';
+      erickFlyer.style.top = erickY + 'px';
+
+      removeIdx++;
+      setTimeout(retractStep, HOOK_RETRACT_SPEED);
+    }
+    retractStep();
+  }
+
+  function phase5_land() {
+    if (!aboutOpen) return;
+    // Clean up: remove hook + flyer
+    const container = document.getElementById('ascii-hook-container');
+    if (container) container.remove();
+    if (erickFlyer) {
+      erickFlyer.remove();
+      erickFlyer = null;
+    }
+    leadArrow = null;
+
+    aboutImCaret.classList.add('gone');
+
+    // Drop ERICK into inline slot
+    erickSlot.textContent = 'ERICK';
+
+    erickSlot.style.textShadow = '0 0 8px rgba(255, 255, 255, 0.6)';
+    setTimeout(() => {
+      erickSlot.style.transition = 'text-shadow 0.4s ease';
+      erickSlot.style.textShadow = '';
+    }, 50);
+
+    setTimeout(() => {
+      finalCaret.classList.add('visible');
+    }, 250);
+  }
+}
+
+function resetKinetype() {
+  const aboutHi = document.getElementById('about-hi');
+  const aboutIm = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot = document.getElementById('about-erick-slot');
+  const finalCaret = document.getElementById('about-final-caret');
+  if (aboutHi) aboutHi.textContent = '';
+  if (aboutIm) aboutIm.textContent = '';
+  if (aboutImCaret) {
+    aboutImCaret.classList.remove('visible');
+    aboutImCaret.classList.remove('gone');
+    aboutImCaret.classList.remove('solid');
+    aboutImCaret.style.opacity = '';
+  }
+  if (erickSlot) {
+    erickSlot.textContent = '';
+    erickSlot.style.textShadow = '';
+    erickSlot.style.transition = '';
+  }
+  if (finalCaret) {
+    finalCaret.classList.remove('visible');
+  }
+  const container = document.getElementById('ascii-hook-container');
+  if (container) container.remove();
+  if (erickFlyer) {
+    erickFlyer.remove();
+    erickFlyer = null;
+  }
+  leadArrow = null;
+  if (nameHText) nameHText.style.visibility = '';
+  if (typeCaretH) typeCaretH.style.display = '';
+}
+
+function resetKinetype() {
+  const aboutHi = document.getElementById('about-hi');
+  const aboutIm = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot = document.getElementById('about-erick-slot');
+  const finalCaret = document.getElementById('about-final-caret');
+  if (aboutHi) aboutHi.textContent = '';
+  if (aboutIm) aboutIm.textContent = '';
+  if (aboutImCaret) {
+    aboutImCaret.classList.remove('visible');
+    aboutImCaret.classList.remove('gone');
+    aboutImCaret.classList.remove('solid');
+    aboutImCaret.style.opacity = '';
+  }
+  if (erickSlot) {
+    erickSlot.textContent = '';
+    erickSlot.style.textShadow = '';
+    erickSlot.style.transition = '';
+  }
+  if (finalCaret) {
+    finalCaret.classList.remove('visible');
+  }
+  const container = document.getElementById('ascii-hook-container');
+  if (container) container.remove();
+  if (erickFlyer) {
+    erickFlyer.remove();
+    erickFlyer = null;
+  }
+  if (nameHText) nameHText.style.visibility = '';
+  if (typeCaretH) typeCaretH.style.display = '';
+}
+
+function resetKinetype() {
+  const aboutHi = document.getElementById('about-hi');
+  const aboutIm = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot = document.getElementById('about-erick-slot');
+  const finalCaret = document.getElementById('about-final-caret');
+  if (aboutHi) aboutHi.textContent = '';
+  if (aboutIm) aboutIm.textContent = '';
+  if (aboutImCaret) {
+    aboutImCaret.classList.remove('visible');
+    aboutImCaret.classList.remove('gone');
+    aboutImCaret.classList.remove('solid');
+    aboutImCaret.style.opacity = '';
+  }
+  if (erickSlot) {
+    erickSlot.textContent = '';
+    erickSlot.style.textShadow = '';
+    erickSlot.style.transition = '';
+  }
+  if (finalCaret) {
+    finalCaret.classList.remove('visible');
+  }
+  // Clean up any leftover hook or flyer
+  const container = document.getElementById('ascii-hook-container');
+  if (container) container.remove();
+  if (erickFlyer) {
+    erickFlyer.remove();
+    erickFlyer = null;
+  }
+  if (nameHText) {
+    nameHText.style.visibility = '';
+  }
+  if (typeCaretH) {
+    typeCaretH.style.display = '';
+  }
+}
+
+// Reset kinetype state when about closes
+function resetKinetype() {
+  const aboutIm = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot = document.getElementById('about-erick-slot');
+  const svg = document.getElementById('kinetype-svg');
+  if (aboutIm) aboutIm.textContent = '';
+  if (aboutImCaret) {
+    aboutImCaret.classList.remove('visible');
+    aboutImCaret.classList.remove('gone');
+  }
+  if (erickSlot) {
+    erickSlot.textContent = '';
+    erickSlot.style.textShadow = '';
+  }
+  if (svg) {
+    svg.classList.remove('active');
+    svg.innerHTML = '';
+  }
+  if (nameHText) {
+    nameHText.style.visibility = '';
+  }
+  if (typeCaretH) {
+    typeCaretH.style.display = '';
+  }
 }
 
 // Type "← back" into back button — caret never hides (keeps blinking)
@@ -1682,11 +2532,9 @@ function typeBackButton() {
   const backText = document.getElementById('back-text');
   backText.textContent = '';
   const fullText = '← back';
-  // Match the name's character rate (70ms/char), and delay the start
-  // so both finish at the same moment.
-  // Name = 15 chars × 70ms = 1050ms. Back = 6 chars × 70ms = 420ms.
-  // Delay back start by (1050 - 420) = 630ms so they finish together.
-  const charDelay = 70;
+  // Match name's 40ms/char and delay start so both finish together.
+  // Name = 15 × 40 = 600ms. Back = 6 × 40 = 240ms. Delay = 360ms.
+  const charDelay = 40;
   const startDelay = (NAME.length - fullText.length) * charDelay;
   let i = 0;
   function tick() {
@@ -1708,24 +2556,106 @@ function closeAbout() {
   aboutBack.classList.remove('visible');
   document.getElementById('back-text').textContent = '';
 
-  // Step 1: Delete horizontal name FIRST while about-view is still fully visible
-  // (so the deletion doesn't show over photos)
-  deleteFrom(nameHText, typeCaretH, () => {
+  const aboutHi = document.getElementById('about-hi');
+  const aboutIm = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot = document.getElementById('about-erick-slot');
+  const finalCaret = document.getElementById('about-final-caret');
+
+  const inlineErick = erickSlot ? erickSlot.textContent : '';
+  const kinetypeRan = inlineErick.length > 0;
+
+  function finishClose() {
+    // Hide horizontal name immediately (no animation in top-right on close)
     nameHorizontal.classList.remove('visible');
+    nameHText.textContent = '';
+    nameHText.style.visibility = '';
+    typeCaretH.style.display = '';
     typeCaretH.classList.add('hidden');
 
-    // Step 2: Now fade out about-view (photos still hidden behind it)
+    // Fade out about-view
     aboutView.classList.remove('visible');
 
-    // Step 3: After about-view finishes fading, restore left strip + retype vertical name
     setTimeout(() => {
       document.body.classList.remove('about-open');
       leftStrip.style.opacity = '';
       leftStrip.style.zIndex = '';
       leftStrip.style.position = '';
-      typeInto(nameText, typeCaret, NAME, 70);
+      leftStrip.style.background = '';
+      leftStrip.style.width = '';
+      resetKinetype();
+      typeInto(nameText, typeCaret, NAME, 40);
     }, 500);
-  }, 25);
+  }
+
+  if (kinetypeRan) {
+    // Hide the final caret (it's at the end after ERICK).
+    // We're going to replace it with a "live" cursor that follows the deletion.
+    finalCaret.classList.remove('visible');
+    // Reuse the about-im-caret (the >) as our live following cursor
+    aboutImCaret.classList.remove('gone');
+    aboutImCaret.classList.add('solid');
+    aboutImCaret.style.opacity = '1';
+
+    // Move aboutImCaret to AFTER erickSlot temporarily (it was before erickSlot in the DOM)
+    // Actually it's easier: just hide aboutImCaret in original position and show finalCaret as the active blink cursor.
+    // Let's go simpler: just delete characters from the right one at a time, with the finalCaret following.
+
+    // Sequence: delete chars from the right of the entire greeting
+    // greeting = "hi," + " i'm " + "ERICK" + finalCaret
+    // So we delete: ERICK first, then " i'm ", then "hi,"
+    // The finalCaret stays at the end of each deletion point
+
+    // Restore finalCaret as visible (it's our live cursor)
+    aboutImCaret.classList.add('gone'); // hide the inner > since finalCaret is the one we'll keep
+    finalCaret.classList.add('visible');
+
+    // Phase: delete ERICK
+    let s = inlineErick;
+    function delErick() {
+      if (s.length > 0) {
+        s = s.slice(0, -1);
+        erickSlot.textContent = s;
+        setTimeout(delErick, TYPE_SPEED);
+      } else {
+        delIm();
+      }
+    }
+    function delIm() {
+      let imS = aboutIm.textContent;
+      function tickIm() {
+        if (imS.length > 0) {
+          imS = imS.slice(0, -1);
+          aboutIm.textContent = imS;
+          setTimeout(tickIm, TYPE_SPEED);
+        } else {
+          delHi();
+        }
+      }
+      tickIm();
+    }
+    function delHi() {
+      let hiS = aboutHi.textContent;
+      function tickHi() {
+        if (hiS.length > 0) {
+          hiS = hiS.slice(0, -1);
+          aboutHi.textContent = hiS;
+          setTimeout(tickHi, TYPE_SPEED);
+        } else {
+          // Everything deleted — hide cursor and finish close
+          finalCaret.classList.remove('visible');
+          finishClose();
+        }
+      }
+      tickHi();
+    }
+    delErick();
+  } else {
+    // Kinetype didn't run — delete horizontal name normally
+    deleteFrom(nameHText, typeCaretH, () => {
+      finishClose();
+    }, 25);
+  }
 }
 
 const aboutBack = document.getElementById('about-back');
