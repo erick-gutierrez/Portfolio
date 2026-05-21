@@ -219,77 +219,171 @@
   }
 
   /* ── CATEGORY TEXT ── */
+  /* ── CATEGORIES + ABOUT — appear above MENU button, stacking upward ── */
   .mobile-cats {
     position: fixed;
-    bottom: calc(5rem + env(safe-area-inset-bottom));
-    left: 1rem;
-    overflow: visible;
+    left: 8px;
+    bottom: calc(1.4rem + env(safe-area-inset-bottom) + 4rem);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
-    pointer-events: none;
+    gap: 0.2rem;
     z-index: 44;
+    pointer-events: none;
     opacity: 0;
-    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .mobile-cats.open {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
   }
 
   .cat-btn {
-    background: transparent; border: none; text-align: left;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 0.95rem;
-    font-weight: 300;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--soft);
+    background: transparent;
+    border: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: lowercase;
+    color: rgba(255,255,255,0.45);
     cursor: pointer;
-    padding: 0.55rem 0;
+    padding: 0.2rem 0;
     white-space: nowrap;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-    line-height: 1.2;
-    pointer-events: none;
+    transition: color 0.2s ease;
+    line-height: 1;
+    pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
-    min-height: 40px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    position: relative;
   }
-  .cat-btn.active { color: var(--white); }
-  .cat-btn:hover  { color: var(--white); }
-  .cat-btn:active { transform: translateY(0) scale(0.96); }
-  @keyframes catUp { to { opacity: 1; transform: translateY(0); } }
+  .cat-btn.active { color: rgba(255,255,255,0.95); }
+  .cat-btn.active::before {
+    content: '·';
+    margin-right: 0.35em;
+    color: rgba(255,255,255,0.5);
+  }
+  .cat-btn:hover { color: rgba(255,255,255,0.75); }
 
-  /* ── FLOATING HAMBURGER ──
-     Fixed to bottom of screen, floats above Safari browser bar */
+  /* About inside menu — more prominent, separated */
+  .menu-about-cat {
+    color: rgba(255,255,255,0.8) !important;
+    font-weight: 700 !important;
+    margin-top: 0.3rem;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .menu-about-cat:hover { color: var(--white) !important; }
+
+  /* Hide cats on about page */
+  body.about-open .mobile-cats {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── MENU BUTTON — bottom of left column ── */
+  /* ── MENU BUTTON — bottom of left column ── */
   .left-hamburger {
     background: transparent; border: none;
-    display: flex; flex-direction: column;
-    align-items: flex-start; justify-content: center;
-    gap: 5px; cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
     position: fixed;
     left: 0;
-    width: 64px;
-    padding: 1rem 0 1rem 1rem;
+    width: 56px;
     bottom: calc(1.4rem + env(safe-area-inset-bottom));
+    padding: 0.6rem 0;
     z-index: 45;
     -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.25s ease;
   }
-  .left-hamburger span {
-    display: block; height: 1.5px; background: var(--white);
-    transition: width 0.2s, transform 0.2s ease, opacity 0.15s;
-    transform-origin: left center;
+  .left-hamburger:hover { opacity: 0.85; }
+  body.about-open .left-hamburger,
+  body.about-open .mobile-cats { opacity: 0; pointer-events: none; }
+  @media (min-width: 768px) {
+    .left-hamburger { width: 72px; }
   }
-  .left-hamburger span:nth-child(1) { width: 28px; }
-  .left-hamburger span:nth-child(2) { width: 18px; }
-  .left-hamburger span:nth-child(3) { width: 23px; }
-  .left-hamburger:hover span        { width: 28px; }
-  .left-hamburger.open span:nth-child(1) { width: 24px; transform: translateY(6.5px) rotate(45deg); }
-  .left-hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
-  .left-hamburger.open span:nth-child(3) { width: 24px; transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* Brackets breathe — both move outward equally */
+  @keyframes bracket-left-breathe {
+    0%, 100% { transform: translateX(0);  opacity: 0.5; }
+    50%       { transform: translateX(-4px); opacity: 0.85; }
+  }
+  @keyframes bracket-right-breathe {
+    0%, 100% { transform: translateX(0);  opacity: 0.5; }
+    50%       { transform: translateX(4px); opacity: 0.85; }
+  }
+  .left-bracket  { animation: bracket-left-breathe  3s ease-in-out infinite; }
+  .right-bracket { animation: bracket-right-breathe 3s ease-in-out infinite; }
+  /* Stop breathing when menu is open */
+  .left-hamburger.open .left-bracket,
+  .left-hamburger.open .right-bracket { animation: none; }
+
+  /* Hamburger icon inside brackets */
+  .menu-icon {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.7);
+  }
+  .menu-icon-bracket {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1;
+  }
+  .menu-icon-lines {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 0;
+  }
+  .menu-icon-lines span {
+    display: block;
+    height: 1.5px;
+    background: rgba(255,255,255,0.75);
+    transition: width 0.2s ease;
+  }
+  .menu-icon-lines span:nth-child(1) { width: 16px; }
+  .menu-icon-lines span:nth-child(2) { width: 10px; }
+  .menu-icon-lines span:nth-child(3) { width: 13px; }
+  .left-hamburger:hover .menu-icon-lines span { width: 16px; }
+  .left-hamburger:hover .menu-icon-bracket { color: rgba(255,255,255,0.85); }
+
+  /* MENU label below the icon */
+  .menu-label {
+    display: block;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    color: rgba(255,255,255,0.65);
+    white-space: nowrap;
+  }
+
+  /* X — shown instead of icon when open, MENU label hides */
+  .menu-close {
+    display: none;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+    line-height: 1;
+  }
+  .left-hamburger.open .menu-icon  { display: none; }
+  .left-hamburger.open .menu-label { display: none; }
+  .left-hamburger.open .menu-close { display: block; }
 
   /* ── ADMIN BAR ── */
   .admin-bar {
@@ -734,28 +828,61 @@
     display: block;
   }
 
-  /* Floating ERICK — gets reeled in along the hook path */
-  .erick-flyer {
+  /* Traveling > cursor during kinetype reel — same dual-state blink as the typing cursor */
+  .erick-lead-cursor {
     position: fixed;
     z-index: 109;
     pointer-events: none;
     font-family: 'Courier New', monospace;
+    font-weight: 400;
+    font-size: 11px;
+    color: white;
+    line-height: 1;
+    user-select: none;
+    animation: travel-caret-blink 0.9s steps(2) infinite;
+  }
+  @keyframes travel-caret-blink {
+    0%, 49% {
+      color: white;
+      background: transparent;
+      outline: none;
+    }
+    50%, 100% {
+      color: var(--bg);
+      background: white;
+    }
+  }
+  .erick-flyer {
+    position: fixed;
+    z-index: 109;
+    pointer-events: none;
     color: var(--white);
     line-height: 1;
     user-select: none;
     white-space: nowrap;
     text-transform: uppercase;
-    font-weight: 300;
   }
   .erick-flyer.vertical {
-    line-height: 1.1;
-    letter-spacing: 0.05em;
+    white-space: normal;
+    line-height: 1.05;
+    text-align: center;
   }
   .erick-flyer.vertical .erick-letter {
     display: block;
   }
   .erick-letter {
     display: inline-block;
+  }
+  /* The leading > that travels ahead of ERICK */
+  .erick-lead {
+    position: fixed;
+    z-index: 109;
+    pointer-events: none;
+    color: var(--white);
+    font-family: 'Courier New', monospace;
+    font-weight: 400;
+    line-height: 1;
+    user-select: none;
   }
 
   /* "i'm" that gets appended after "hi," */
@@ -917,12 +1044,6 @@
   }
   /* Hide hamburger and cats while on about page.
      Left-strip is controlled by JS so name deletion is visible. */
-  body.about-open .left-hamburger,
-  body.about-open .mobile-cats {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
   .about-content {
     text-align: left;
     padding: 2rem;
@@ -1064,52 +1185,10 @@
     .about-sub { font-size: 1.05rem; }
   }
 
-  /* ── LANDSCAPE ORIENTATION FIX ──
-     On mobile landscape, the name + cats compete for vertical space.
-     Shift cats to the right of the left strip so they don't overlap. */
+  /* ── LANDSCAPE ORIENTATION FIX ── */
   @media (max-height: 500px) and (orientation: landscape) {
-    .mobile-cats {
-      bottom: calc(2.5rem + env(safe-area-inset-bottom));
-      left: 4.5rem;
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 1.2rem;
-      max-width: calc(100vw - 6rem);
-    }
-    .cat-btn {
-      padding: 0.2rem 0;
-    }
-    .cat-btn.menu-about {
-      margin-top: 0;
-      margin-left: 0.5rem;
-    }
+    .cat-btn { padding: 0.2rem 0.2rem; }
   }
-  .cat-btn.menu-about {
-    margin-top: 1.2rem;
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
-    color: var(--light);
-    text-transform: lowercase;
-    position: relative;
-    padding: 0.7rem 0;
-    min-height: 44px;
-  }
-  .cat-btn.menu-about::before {
-    content: '→ ';
-    color: var(--soft);
-    margin-right: 0.3em;
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-    display: inline-block;
-  }
-  .cat-btn.menu-about:hover {
-    color: var(--white);
-  }
-  .cat-btn.menu-about:hover::before {
-    transform: translateX(4px);
-    color: var(--white);
-  }
-  .cat-btn.menu-about.active { color: var(--white); }
   .lightbox {
     display: none; position: fixed; inset: 0; z-index: 1000;
     background: #000; flex-direction: column;
@@ -1240,20 +1319,28 @@
   <!-- Black sliding panel -->
   <div class="mobile-drawer-panel" id="mobile-drawer-panel"></div>
 
-  <!-- Category text — fixed above hamburger -->
+  <!-- Permanent /about button at bottom left -->
+  <!-- Menu button — [≡] brackets + MENU label at bottom -->
+  <button class="left-hamburger" id="hamburger" aria-label="Toggle menu">
+    <span class="menu-icon">
+      <span class="menu-icon-bracket left-bracket">[</span>
+      <span class="menu-icon-lines">
+        <span></span><span></span><span></span>
+      </span>
+      <span class="menu-icon-bracket right-bracket">]</span>
+    </span>
+    <span class="menu-close">✕</span>
+    <span class="menu-label">MENU</span>
+  </button>
+
+  <!-- Category filters + about — appear when menu opens -->
   <div class="mobile-cats" id="mobile-cats">
-    <button class="cat-btn active" data-cat="all">All</button>
-    <button class="cat-btn" data-cat="street">Street</button>
-    <button class="cat-btn" data-cat="detail">Details</button>
-    <button class="cat-btn" data-cat="people">People</button>
-    <button class="cat-btn menu-about" id="menu-about-btn">/about</button>
+    <button class="cat-btn" data-cat="street">street</button>
+    <button class="cat-btn" data-cat="detail">details</button>
+    <button class="cat-btn" data-cat="people">people</button>
+    <button class="cat-btn menu-about-cat" id="menu-about-btn">about</button>
     <button class="cat-btn admin-exit-btn" id="admin-cat-btn" style="display:none;">Exit Admin</button>
   </div>
-
-  <!-- Floating hamburger — fixed, floats above Safari bar -->
-  <button class="left-hamburger" id="hamburger" aria-label="Toggle menu">
-    <span></span><span></span><span></span>
-  </button>
 
   <!-- RIGHT CONTENT -->
   <div class="right-col">
@@ -1477,14 +1564,11 @@ function openMobileMenu() {
   if (menuOpen) return;
   menuOpen = true;
 
-  // Cancel any pending close cleanup
   if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
 
-  // Measure before grid changes
   measureCardWidth();
   measureDrawerWidth();
 
-  // Single animation frame for clean class swap
   requestAnimationFrame(() => {
     hamburger.classList.add('open');
     cover.classList.add('active');
@@ -1492,27 +1576,9 @@ function openMobileMenu() {
     drawerPanel.classList.add('open');
     feed.classList.add('menu-open');
     mobileCats.classList.add('open');
-
-    // Stagger cats bottom→top
-    catBtns.forEach(btn => {
-      btn.style.transition    = '';
-      btn.style.animation     = 'none';
-      btn.style.opacity       = '0';
-      btn.style.transform     = 'translateY(8px)';
-      btn.style.pointerEvents = 'none';
-    });
-    requestAnimationFrame(() => {
-      const n = catBtns.length;
-      catBtns.forEach((btn, i) => {
-        const delay = 0.15 + (n - 1 - i) * 0.07;
-        btn.style.animation     = `catUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s forwards`;
-        btn.style.pointerEvents = 'auto';
-      });
-    });
   });
 }
 
-// ── CLOSE ──
 function closeMobileMenu(fast) {
   if (!menuOpen) return;
   menuOpen = false;
@@ -1520,35 +1586,11 @@ function closeMobileMenu(fast) {
   hamburger.classList.remove('open');
   cover.classList.remove('active');
   document.body.classList.remove('menu-open');
-
-  // Collapse black panel
   drawerPanel.classList.remove('open');
-  // Restore 2-col grid
   feed.classList.remove('menu-open');
-  // Fade category panel out
   mobileCats.classList.remove('open');
 
-  // Fade cat text out
-  const dur = fast ? '0.12s' : '0.7s';
-  catBtns.forEach(btn => {
-    btn.style.pointerEvents = 'none';
-    btn.style.animation     = 'none';
-    btn.style.transition    = `opacity ${dur} cubic-bezier(0.22, 1, 0.36, 1), transform ${dur} cubic-bezier(0.22, 1, 0.36, 1)`;
-    btn.style.opacity       = '0';
-    btn.style.transform     = 'translateY(6px)';
-  });
-
-  // After fade, wipe inline styles so next open is clean
-  const clearMs = fast ? 150 : 720;
-  closeTimer = setTimeout(() => {
-    if (!menuOpen) {
-      catBtns.forEach(btn => {
-        btn.style.transition = '';
-        btn.style.animation  = '';
-      });
-    }
-    closeTimer = null;
-  }, clearMs);
+  closeTimer = setTimeout(() => { closeTimer = null; }, fast ? 150 : 720);
 }
 
 // ── HAMBURGER — toggle on all screen sizes ──
@@ -1571,8 +1613,10 @@ function applyFilter() {
   });
 }
 function syncCatUI(cat) {
-  currentCat.value = cat;
-  catBtns.forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  // Clicking the active cat again resets to "all" (show everything)
+  const newCat = currentCat.value === cat ? 'all' : cat;
+  currentCat.value = newCat;
+  catBtns.forEach(b => b.classList.toggle('active', b.dataset.cat === newCat));
   applyFilter();
 }
 
@@ -2054,7 +2098,7 @@ function openAbout() {
           leftStrip.style.width = '';
         }, 300);
 
-        // Type horizontal name in the top right (faster)
+        // Type horizontal name in the top right
         nameHorizontal.classList.add('visible');
         typeInto(nameHText, typeCaretH, NAME, 40);
 
@@ -2062,339 +2106,317 @@ function openAbout() {
         aboutBack.classList.add('visible');
         typeBackButton();
 
-        // After everything is settled, kick off the kinetype sequence
-        // Name takes 15 * 40 = 600ms to type + 700ms pause
+        // Start kinetype AT THE SAME TIME as the name — "hi, i'm" types concurrently
+        // with "Erick Gutierrez". Name finishes at 600ms, "hi, i'm" finishes at ~320ms.
+        // Small delay so about page is fully visible first.
         setTimeout(() => {
           if (aboutOpen) runKinetypeSequence();
-        }, 600 + 700);
+        }, 200);
       }, 25);
     }, 400);
   }, 150);
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// KINETYPE SEQUENCE — v4: char shift reel-in
-//
-// The cursor (about-im-caret) is the only cursor used.
-// Hook is built from randomized characters using -, =, ~, |, :, +.
-// During reel-in, the leftmost char disappears and the rest shift left,
-// pulling ERICK + > along with them toward "hi, i'm".
+// KINETYPE SEQUENCE
 // ═══════════════════════════════════════════════════════════════════
 
-const HOOK_CHAR_W = 14;
-const HOOK_CHAR_H = 18;
-const HOOK_FONT_PX = 18;
-const TYPE_SPEED = 25;
+const HOOK_CHAR_W = 9;
+const HOOK_CHAR_H = 12;
+const HOOK_FONT_PX = 11;
+const TYPE_SPEED = 40;
 const DELETE_SPEED = 30;
-const HOOK_DRAW_SPEED = 40;
-const HOOK_RETRACT_SPEED = 45;
+const HOOK_DRAW_SPEED = 18;
+const REEL_SPEED = 28;
 
-const HORIZ_CHARS = ['-', '=', '~'];
-const VERT_CHARS = ['|', ':'];
+const HORIZ_CHARS = ['-', '=', '~', '#', '@', '&', '$', '%', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 'u', 'v', 'w', 'x', 'z', '-', '=', '~', '-', '#', '$'];
+const VERT_CHARS  = ['|', ':', '#', '@', '&', '$', '%', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 'u', 'v', 'w', 'x', 'z', '|', ':', '|'];
 const CORNER_CHAR = '+';
+function randChar(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function randChar(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-let hookChars = [];  // {el, type, gridX, gridY}
-let leadArrow = null;
+let pathNodes  = [];
 let erickFlyer = null;
+let erickLead  = null;
 
 function runKinetypeSequence() {
-  const aboutHi = document.getElementById('about-hi');
-  const aboutIm = document.getElementById('about-im');
+  const aboutHi      = document.getElementById('about-hi');
+  const aboutIm      = document.getElementById('about-im');
   const aboutImCaret = document.getElementById('about-im-caret');
-  const erickSlot = document.getElementById('about-erick-slot');
-  const finalCaret = document.getElementById('about-final-caret');
+  const erickSlot    = document.getElementById('about-erick-slot');
+  const finalCaret   = document.getElementById('about-final-caret');
 
   aboutImCaret.classList.add('visible');
 
-  // PHASE 0: Type "hi,"
-  const hiText = 'hi,';
-  let hi_i = 0;
-  function typeHi() {
-    if (hi_i <= hiText.length) {
-      aboutHi.textContent = hiText.slice(0, hi_i);
-      hi_i++;
-      setTimeout(typeHi, TYPE_SPEED);
+  // Type "hi, i'm " concurrently with "Erick Gutierrez" (same speed)
+  const fullType = "hi, i'm ";
+  let t_i = 0;
+  function typeAll() {
+    if (t_i <= fullType.length) {
+      const typed = fullType.slice(0, t_i);
+      aboutHi.textContent = typed.length <= 3 ? typed : 'hi,';
+      aboutIm.textContent = typed.length > 3 ? typed.slice(3) : '';
+      t_i++;
+      setTimeout(typeAll, TYPE_SPEED);
     } else {
-      setTimeout(typeIm, 400);
+      // Start hook draw + Gutierrez deletion at the same time
+      setTimeout(() => {
+        if (!aboutOpen) return;
+        phase3_drawHook();
+        phase2_deleteGutierrez();
+      }, 250);
     }
   }
-  typeHi();
-
-  // PHASE 1: Type " i'm "
-  const imText = " i'm ";
-  let im_i = 0;
-  function typeIm() {
-    if (im_i <= imText.length) {
-      aboutIm.textContent = imText.slice(0, im_i);
-      im_i++;
-      setTimeout(typeIm, TYPE_SPEED);
-    } else {
-      setTimeout(phase2_deleteGutierrez, 500);
-    }
-  }
+  typeAll();
 
   function phase2_deleteGutierrez() {
     if (!aboutOpen) return;
-    const targetLength = 5;
-    function tickDelete() {
-      const current = nameHText.textContent;
-      if (current.length > targetLength) {
-        nameHText.textContent = current.slice(0, -1);
-        setTimeout(tickDelete, DELETE_SPEED);
+    function tick() {
+      const cur = nameHText.textContent;
+      if (cur.length > 5) {
+        nameHText.textContent = cur.slice(0, -1);
+        setTimeout(tick, DELETE_SPEED);
       } else {
         typeCaretH.style.display = 'none';
-        setTimeout(phase3_drawHook, 450);
       }
     }
-    tickDelete();
+    tick();
   }
 
   function phase3_drawHook() {
     if (!aboutOpen) return;
 
-    aboutImCaret.classList.remove('visible');
-    aboutImCaret.classList.add('solid');
-
     const caretRect = aboutImCaret.getBoundingClientRect();
-    const erickRect = nameHText.getBoundingClientRect();
 
-    const startX = caretRect.right + 2;
+    // Hide typing cursor — blinking lead takes over during draw
+    aboutImCaret.classList.add('gone');
+
+    // Anchor the hook start at the cursor position
+    const startX = caretRect.right + 4;
     const startY = caretRect.top + caretRect.height / 2;
+
+    // We DON'T measure ERICK's position yet — Gutierrez is still deleting.
+    // We'll snapshot ERICK's final position right before the reel starts.
+    // For now, use the viewport right edge as a placeholder end target,
+    // and we'll build the path dynamically once deletion completes.
+
+    // Wait for Gutierrez deletion to finish, then build the full path
+    function waitForDeletion() {
+      if (nameHText.textContent.length > 5) {
+        setTimeout(waitForDeletion, 50);
+        return;
+      }
+      // Gutierrez is gone — now measure ERICK's true position
+      buildHook(startX, startY);
+    }
+    waitForDeletion();
+  }
+
+  function buildHook(startX, startY) {
+    if (!aboutOpen) return;
+
+    // Snapshot ERICK position NOW (Gutierrez fully deleted)
+    const erickRect = nameHText.getBoundingClientRect();
+    const endY = erickRect.top  + erickRect.height / 2;
     const endX = erickRect.left - 4;
-    const endY = erickRect.top + erickRect.height / 2;
 
-    aboutImCaret.style.opacity = '0';
+    const turn1X = startX + 80;
+    const turn2X = turn1X + 120;
 
-    const turnX = startX + 80;
-    const horizDist1 = turnX - startX;
-    const vertDist = startY - endY;
-    const horizDist2 = endX - turnX;
+    const totalVert = startY - endY;
+    const seg2Vert  = Math.floor(totalVert * 0.45 / HOOK_CHAR_H) * HOOK_CHAR_H;
+    const midY      = startY - seg2Vert;
 
-    const seg1Chars = Math.max(3, Math.floor(horizDist1 / HOOK_CHAR_W));
-    const seg2Chars = Math.max(3, Math.floor(vertDist / HOOK_CHAR_H));
-    const seg3Chars = Math.max(3, Math.floor(horizDist2 / HOOK_CHAR_W));
+    const seg1Count = Math.max(2, Math.floor((turn1X - startX) / HOOK_CHAR_W));
+    const seg2Count = Math.max(2, Math.floor(seg2Vert / HOOK_CHAR_H));
+    const seg3Count = Math.max(2, Math.floor((turn2X - turn1X) / HOOK_CHAR_W));
+    const seg4Count = Math.max(2, Math.floor((midY - endY) / HOOK_CHAR_H));
+    const seg5Count = Math.max(2, Math.round((endX - turn2X) / HOOK_CHAR_W));
 
-    hookChars = [];
+    pathNodes = [];
     const container = document.createElement('div');
     container.className = 'ascii-hook';
     container.style.fontSize = HOOK_FONT_PX + 'px';
-    container.style.left = '0';
-    container.style.top = '0';
     container.id = 'ascii-hook-container';
     document.body.appendChild(container);
 
-    const seg1EndX = startX + seg1Chars * HOOK_CHAR_W;
-    const seg2X = seg1EndX;
-    const seg2EndY = startY - seg2Chars * HOOK_CHAR_H;
-    const seg3StartX = seg2X;
-
-    // Segment 1: horizontal (going RIGHT from caret)
-    for (let i = 0; i < seg1Chars; i++) {
-      const span = document.createElement('span');
-      span.className = 'ascii-hook-char';
-      span.textContent = randChar(HORIZ_CHARS);
-      span.style.position = 'fixed';
-      span.style.left = (startX + i * HOOK_CHAR_W) + 'px';
-      span.style.top = (startY - HOOK_FONT_PX / 2) + 'px';
-      container.appendChild(span);
-      hookChars.push({ el: span, seg: 1 });
+    function addSpan(x, y, ch, dir) {
+      const sp = document.createElement('span');
+      sp.className = 'ascii-hook-char';
+      sp.textContent = ch;
+      sp.style.cssText = 'position:fixed;left:' + x + 'px;top:' + (y - HOOK_FONT_PX/2) + 'px';
+      container.appendChild(sp);
+      pathNodes.push({ x, y, el: sp, dir });
     }
 
-    // Corner 1: bottom-right corner (where seg1 meets seg2)
-    const cornerBR = document.createElement('span');
-    cornerBR.className = 'ascii-hook-char';
-    cornerBR.textContent = CORNER_CHAR;
-    cornerBR.style.position = 'fixed';
-    cornerBR.style.left = seg2X + 'px';
-    cornerBR.style.top = (startY - HOOK_FONT_PX / 2) + 'px';
-    container.appendChild(cornerBR);
-    hookChars.push({ el: cornerBR, seg: 'corner1' });
+    // seg1: right from startX
+    for (let i = 0; i < seg1Count; i++)
+      addSpan(startX + i * HOOK_CHAR_W, startY, randChar(HORIZ_CHARS), 'h');
+    addSpan(turn1X, startY, CORNER_CHAR, 'corner');
 
-    // Segment 2: vertical (going UP)
-    for (let i = 0; i < seg2Chars; i++) {
-      const span = document.createElement('span');
-      span.className = 'ascii-hook-char';
-      span.textContent = randChar(VERT_CHARS);
-      span.style.position = 'fixed';
-      span.style.left = (seg2X) + 'px';
-      span.style.top = (startY - (i + 1) * HOOK_CHAR_H) + 'px';
-      container.appendChild(span);
-      hookChars.push({ el: span, seg: 2 });
+    // seg2: up from startY to midY
+    for (let i = 1; i <= seg2Count; i++)
+      addSpan(turn1X, startY - i * HOOK_CHAR_H, randChar(VERT_CHARS), 'v');
+    addSpan(turn1X, midY, CORNER_CHAR, 'corner');
+
+    // seg3: right from turn1X to turn2X
+    for (let i = 1; i <= seg3Count; i++)
+      addSpan(turn1X + i * HOOK_CHAR_W, midY, randChar(HORIZ_CHARS), 'h');
+    addSpan(turn2X, midY, CORNER_CHAR, 'corner');
+
+    // seg4: up from midY to endY
+    for (let i = 1; i <= seg4Count; i++)
+      addSpan(turn2X, midY - i * HOOK_CHAR_H, randChar(VERT_CHARS), 'v');
+    addSpan(turn2X, endY, CORNER_CHAR, 'corner');
+
+    // seg5: right from turn2X to endX (toward ERICK)
+    for (let i = 1; i <= seg5Count; i++)
+      addSpan(turn2X + i * HOOK_CHAR_W, endY, randChar(HORIZ_CHARS), 'h');
+
+    // Blinking lead cursor travels at the tip
+    const leadCursor = document.createElement('div');
+    leadCursor.className = 'erick-lead-cursor';
+    leadCursor.style.cssText = 'position:fixed;z-index:109;pointer-events:none;font-size:' + HOOK_FONT_PX + 'px';
+    leadCursor.textContent = '>';
+    document.body.appendChild(leadCursor);
+
+    function moveLead(node) {
+      if (node.dir === 'v') {
+        leadCursor.style.left = node.x + 'px';
+        leadCursor.style.top  = (node.y + HOOK_CHAR_H - HOOK_FONT_PX/2) + 'px';
+      } else {
+        leadCursor.style.left = (node.x + HOOK_CHAR_W) + 'px';
+        leadCursor.style.top  = (node.y - HOOK_FONT_PX/2) + 'px';
+      }
     }
+    if (pathNodes.length > 0) moveLead(pathNodes[0]);
 
-    // Corner 2: top-right corner (where seg2 meets seg3)
-    const cornerTR = document.createElement('span');
-    cornerTR.className = 'ascii-hook-char';
-    cornerTR.textContent = CORNER_CHAR;
-    cornerTR.style.position = 'fixed';
-    cornerTR.style.left = seg2X + 'px';
-    cornerTR.style.top = (seg2EndY - HOOK_FONT_PX / 2) + 'px';
-    container.appendChild(cornerTR);
-    hookChars.push({ el: cornerTR, seg: 'corner2' });
-
-    // Segment 3: horizontal (going RIGHT toward ERICK)
-    for (let i = 0; i < seg3Chars; i++) {
-      const span = document.createElement('span');
-      span.className = 'ascii-hook-char';
-      span.textContent = randChar(HORIZ_CHARS);
-      span.style.position = 'fixed';
-      span.style.left = (seg3StartX + (i + 1) * HOOK_CHAR_W) + 'px';
-      span.style.top = (seg2EndY - HOOK_FONT_PX / 2) + 'px';
-      container.appendChild(span);
-      hookChars.push({ el: span, seg: 3 });
-    }
-
-    // Leading > at very end
-    leadArrow = document.createElement('span');
-    leadArrow.className = 'ascii-hook-char';
-    leadArrow.textContent = '>';
-    leadArrow.style.position = 'fixed';
-    leadArrow.style.left = (seg3StartX + (seg3Chars + 1) * HOOK_CHAR_W) + 'px';
-    leadArrow.style.top = (seg2EndY - HOOK_FONT_PX / 2) + 'px';
-    container.appendChild(leadArrow);
-
-    // Draw chars one at a time
     let drawIdx = 0;
     function drawNext() {
-      if (drawIdx >= hookChars.length) {
-        // Show the leading > last
-        leadArrow.classList.add('on');
-        setTimeout(phase4_reelIn, 500);
+      if (drawIdx >= pathNodes.length) {
+        leadCursor.remove();
+        setTimeout(phase4_reel, 300);
         return;
       }
-      hookChars[drawIdx].el.classList.add('on');
+      pathNodes[drawIdx].el.classList.add('on');
+      if (pathNodes[drawIdx + 1]) moveLead(pathNodes[drawIdx + 1]);
       drawIdx++;
       setTimeout(drawNext, HOOK_DRAW_SPEED);
     }
     drawNext();
   }
 
-  function phase4_reelIn() {
+  function phase4_reel() {
     if (!aboutOpen) return;
 
-    // Hide top-right ERICK and create flyer matching its style
     nameHText.style.visibility = 'hidden';
-    const erickComputed = window.getComputedStyle(nameHText);
+    const ec = window.getComputedStyle(nameHText);
 
+    // ERICK flyer — matches top-right styling
     erickFlyer = document.createElement('div');
     erickFlyer.className = 'erick-flyer';
-    erickFlyer.style.fontFamily = erickComputed.fontFamily;
-    erickFlyer.style.fontSize = erickComputed.fontSize;
-    erickFlyer.style.fontWeight = erickComputed.fontWeight;
-    erickFlyer.style.letterSpacing = erickComputed.letterSpacing;
-    erickFlyer.style.textTransform = 'uppercase';
-    erickFlyer.style.color = 'white';
+    erickFlyer.style.cssText = 'position:fixed;z-index:109;pointer-events:none;' +
+      'font-family:' + ec.fontFamily + ';font-size:' + ec.fontSize + ';' +
+      'font-weight:' + ec.fontWeight + ';letter-spacing:' + ec.letterSpacing + ';' +
+      'text-transform:uppercase;color:white;white-space:nowrap;';
     erickFlyer.textContent = 'ERICK';
-
-    // Position ERICK just BEFORE the leading > (between the line and >)
-    const arrowRect = leadArrow.getBoundingClientRect();
     document.body.appendChild(erickFlyer);
-    const flyerRect = erickFlyer.getBoundingClientRect();
 
-    // ERICK sits just LEFT of the leading > arrow
-    let erickX = arrowRect.left - flyerRect.width - 4;
-    let erickY = arrowRect.top - (flyerRect.height - arrowRect.height) / 2;
-    erickFlyer.style.left = erickX + 'px';
-    erickFlyer.style.top = erickY + 'px';
+    // Blinking > lead — same style used throughout
+    erickLead = document.createElement('div');
+    erickLead.className = 'erick-lead-cursor';
+    erickLead.style.cssText = 'position:fixed;z-index:109;pointer-events:none;font-size:' + HOOK_FONT_PX + 'px';
+    erickLead.textContent = '>';
+    document.body.appendChild(erickLead);
 
-    let arrowX = arrowRect.left;
-    let arrowY = arrowRect.top;
+    function positionPair(node) {
+      const flyW  = erickFlyer.offsetWidth  || 60;
+      const flyH  = erickFlyer.offsetHeight || 20;
+      const leadW = erickLead.offsetWidth   || 14;
+      const leadH = erickLead.offsetHeight  || 18;
 
-    // Reel in step: remove leftmost char + shift ALL remaining chars + ERICK + > left/down
-    let removeIdx = 0;
-    const allChars = hookChars; // ordered: seg1, corner1, seg2, corner2, seg3
-    const totalChars = allChars.length;
-
-    function retractStep() {
-      if (removeIdx >= totalChars) {
-        // Done
-        phase5_land();
-        return;
+      if (node.dir === 'v') {
+        // Vertical: > on top, ERICK stacked below, offset RIGHT of line to avoid overlap
+        const ox = node.x + HOOK_CHAR_W * 2;
+        if (!erickFlyer.classList.contains('vertical')) {
+          erickFlyer.classList.add('vertical');
+          erickFlyer.innerHTML = 'ERICK'.split('').map(l =>
+            '<span class="erick-letter">' + l + '</span>').join('');
+        }
+        erickLead.style.left  = ox + 'px';
+        erickLead.style.top   = (node.y - leadH / 2) + 'px';
+        erickFlyer.style.left = (ox - flyW / 2 + leadW / 2) + 'px';
+        erickFlyer.style.top  = (node.y + leadH * 0.5) + 'px';
+      } else {
+        // Horizontal: ERICK then > to the right
+        if (erickFlyer.classList.contains('vertical')) {
+          erickFlyer.classList.remove('vertical');
+          erickFlyer.textContent = 'ERICK';
+        }
+        const baseX = node.x + HOOK_CHAR_W + 2;
+        erickFlyer.style.left = baseX + 'px';
+        erickFlyer.style.top  = (node.y - flyH / 2) + 'px';
+        erickLead.style.left  = (baseX + flyW + 2) + 'px';
+        erickLead.style.top   = (node.y - leadH / 2) + 'px';
       }
-      const c = allChars[removeIdx];
-
-      // Fade out the leftmost char
-      c.el.classList.add('off');
-      c.el.classList.remove('on');
-
-      // Determine shift direction based on the segment of the char we're removing
-      // - seg1 chars: removing pulls everything LEFT (toward hi, i'm)
-      // - corner1: same as seg2 (pull DOWN to enter seg1)
-      // - seg2: pull DOWN
-      // - corner2: same as seg3 (pull LEFT to enter seg2 top)
-      // - seg3: pull LEFT
-
-      let shiftX = 0, shiftY = 0;
-      if (c.seg === 1) {
-        shiftX = -HOOK_CHAR_W;
-      } else if (c.seg === 'corner1') {
-        // Removing the corner means the hook is collapsing into the bottom segment
-        shiftY = HOOK_CHAR_H;
-      } else if (c.seg === 2) {
-        shiftY = HOOK_CHAR_H;
-      } else if (c.seg === 'corner2') {
-        shiftX = -HOOK_CHAR_W;
-      } else if (c.seg === 3) {
-        shiftX = -HOOK_CHAR_W;
-      }
-
-      // Apply shift to ALL remaining chars (from removeIdx+1 onward)
-      // For the vertical segment, when we remove a vertical char, the chars ABOVE it shift down.
-      // Actually the cleanest way: walk the remaining chars and re-position them by accumulated shift.
-      // Simpler: each remaining char + ERICK + leadArrow gets the shiftX/shiftY applied to its current position.
-      for (let k = removeIdx + 1; k < totalChars; k++) {
-        const ch = allChars[k];
-        const left = parseFloat(ch.el.style.left);
-        const top = parseFloat(ch.el.style.top);
-        ch.el.style.left = (left + shiftX) + 'px';
-        ch.el.style.top = (top + shiftY) + 'px';
-      }
-      // Shift the lead arrow + ERICK
-      arrowX += shiftX;
-      arrowY += shiftY;
-      leadArrow.style.left = arrowX + 'px';
-      leadArrow.style.top = arrowY + 'px';
-      erickX += shiftX;
-      erickY += shiftY;
-      erickFlyer.style.left = erickX + 'px';
-      erickFlyer.style.top = erickY + 'px';
-
-      removeIdx++;
-      setTimeout(retractStep, HOOK_RETRACT_SPEED);
     }
-    retractStep();
+
+    // Start ERICK+> at the last pathNode (rightmost horizontal char, nearest ERICK)
+    positionPair(pathNodes[pathNodes.length - 1]);
+
+    // Reel: consume from ERICK end (last index) toward hi/im end (index 0)
+    let i = pathNodes.length - 1;
+    function reelStep() {
+      if (i < 0) { phase5_land(); return; }
+      pathNodes[i].el.classList.add('off');
+      pathNodes[i].el.classList.remove('on');
+      if (i - 1 >= 0) positionPair(pathNodes[i - 1]);
+      i--;
+      setTimeout(reelStep, REEL_SPEED);
+    }
+    reelStep();
   }
 
   function phase5_land() {
     if (!aboutOpen) return;
-    // Clean up: remove hook + flyer
-    const container = document.getElementById('ascii-hook-container');
-    if (container) container.remove();
-    if (erickFlyer) {
-      erickFlyer.remove();
-      erickFlyer = null;
-    }
-    leadArrow = null;
+    const c = document.getElementById('ascii-hook-container');
+    if (c) c.remove();
+    if (erickFlyer) { erickFlyer.remove(); erickFlyer = null; }
+    if (erickLead)  { erickLead.remove();  erickLead  = null; }
 
-    aboutImCaret.classList.add('gone');
-
-    // Drop ERICK into inline slot
     erickSlot.textContent = 'ERICK';
-
-    erickSlot.style.textShadow = '0 0 8px rgba(255, 255, 255, 0.6)';
+    erickSlot.style.textShadow = '0 0 8px rgba(255,255,255,0.6)';
     setTimeout(() => {
       erickSlot.style.transition = 'text-shadow 0.4s ease';
       erickSlot.style.textShadow = '';
     }, 50);
-
-    setTimeout(() => {
-      finalCaret.classList.add('visible');
-    }, 250);
+    setTimeout(() => { finalCaret.classList.add('visible'); }, 200);
   }
+}
+
+function resetKinetype() {
+  const aboutHi      = document.getElementById('about-hi');
+  const aboutIm      = document.getElementById('about-im');
+  const aboutImCaret = document.getElementById('about-im-caret');
+  const erickSlot    = document.getElementById('about-erick-slot');
+  const finalCaret   = document.getElementById('about-final-caret');
+  if (aboutHi)      aboutHi.textContent = '';
+  if (aboutIm)      aboutIm.textContent = '';
+  if (aboutImCaret) {
+    aboutImCaret.classList.remove('visible','gone','solid');
+    aboutImCaret.style.opacity = '';
+  }
+  if (erickSlot) {
+    erickSlot.textContent = '';
+    erickSlot.style.textShadow = '';
+    erickSlot.style.transition = '';
+  }
+  if (finalCaret) finalCaret.classList.remove('visible');
+  const c = document.getElementById('ascii-hook-container');
+  if (c) c.remove();
+  if (erickFlyer) { erickFlyer.remove(); erickFlyer = null; }
+  if (erickLead)  { erickLead.remove();  erickLead  = null; }
+  if (nameHText)  nameHText.style.visibility = '';
+  if (typeCaretH) typeCaretH.style.display   = '';
 }
 
 function resetKinetype() {
@@ -2416,114 +2438,13 @@ function resetKinetype() {
     erickSlot.style.textShadow = '';
     erickSlot.style.transition = '';
   }
-  if (finalCaret) {
-    finalCaret.classList.remove('visible');
-  }
+  if (finalCaret) finalCaret.classList.remove('visible');
   const container = document.getElementById('ascii-hook-container');
   if (container) container.remove();
-  if (erickFlyer) {
-    erickFlyer.remove();
-    erickFlyer = null;
-  }
-  leadArrow = null;
+  if (erickFlyer) { erickFlyer.remove(); erickFlyer = null; }
+  if (erickLead) { erickLead.remove(); erickLead = null; }
   if (nameHText) nameHText.style.visibility = '';
   if (typeCaretH) typeCaretH.style.display = '';
-}
-
-function resetKinetype() {
-  const aboutHi = document.getElementById('about-hi');
-  const aboutIm = document.getElementById('about-im');
-  const aboutImCaret = document.getElementById('about-im-caret');
-  const erickSlot = document.getElementById('about-erick-slot');
-  const finalCaret = document.getElementById('about-final-caret');
-  if (aboutHi) aboutHi.textContent = '';
-  if (aboutIm) aboutIm.textContent = '';
-  if (aboutImCaret) {
-    aboutImCaret.classList.remove('visible');
-    aboutImCaret.classList.remove('gone');
-    aboutImCaret.classList.remove('solid');
-    aboutImCaret.style.opacity = '';
-  }
-  if (erickSlot) {
-    erickSlot.textContent = '';
-    erickSlot.style.textShadow = '';
-    erickSlot.style.transition = '';
-  }
-  if (finalCaret) {
-    finalCaret.classList.remove('visible');
-  }
-  const container = document.getElementById('ascii-hook-container');
-  if (container) container.remove();
-  if (erickFlyer) {
-    erickFlyer.remove();
-    erickFlyer = null;
-  }
-  if (nameHText) nameHText.style.visibility = '';
-  if (typeCaretH) typeCaretH.style.display = '';
-}
-
-function resetKinetype() {
-  const aboutHi = document.getElementById('about-hi');
-  const aboutIm = document.getElementById('about-im');
-  const aboutImCaret = document.getElementById('about-im-caret');
-  const erickSlot = document.getElementById('about-erick-slot');
-  const finalCaret = document.getElementById('about-final-caret');
-  if (aboutHi) aboutHi.textContent = '';
-  if (aboutIm) aboutIm.textContent = '';
-  if (aboutImCaret) {
-    aboutImCaret.classList.remove('visible');
-    aboutImCaret.classList.remove('gone');
-    aboutImCaret.classList.remove('solid');
-    aboutImCaret.style.opacity = '';
-  }
-  if (erickSlot) {
-    erickSlot.textContent = '';
-    erickSlot.style.textShadow = '';
-    erickSlot.style.transition = '';
-  }
-  if (finalCaret) {
-    finalCaret.classList.remove('visible');
-  }
-  // Clean up any leftover hook or flyer
-  const container = document.getElementById('ascii-hook-container');
-  if (container) container.remove();
-  if (erickFlyer) {
-    erickFlyer.remove();
-    erickFlyer = null;
-  }
-  if (nameHText) {
-    nameHText.style.visibility = '';
-  }
-  if (typeCaretH) {
-    typeCaretH.style.display = '';
-  }
-}
-
-// Reset kinetype state when about closes
-function resetKinetype() {
-  const aboutIm = document.getElementById('about-im');
-  const aboutImCaret = document.getElementById('about-im-caret');
-  const erickSlot = document.getElementById('about-erick-slot');
-  const svg = document.getElementById('kinetype-svg');
-  if (aboutIm) aboutIm.textContent = '';
-  if (aboutImCaret) {
-    aboutImCaret.classList.remove('visible');
-    aboutImCaret.classList.remove('gone');
-  }
-  if (erickSlot) {
-    erickSlot.textContent = '';
-    erickSlot.style.textShadow = '';
-  }
-  if (svg) {
-    svg.classList.remove('active');
-    svg.innerHTML = '';
-  }
-  if (nameHText) {
-    nameHText.style.visibility = '';
-  }
-  if (typeCaretH) {
-    typeCaretH.style.display = '';
-  }
 }
 
 // Type "← back" into back button — caret never hides (keeps blinking)
@@ -2680,11 +2601,6 @@ mobileCats.addEventListener('click', e => {
   const btn = e.target.closest('.cat-btn');
   if (!btn || btn.id === 'menu-about-btn' || btn.id === 'admin-cat-btn') return;
   // If on about page, close it first then filter
-  if (aboutOpen) closeAbout();
-});
-
-// Tapping horizontal name returns to portfolio
-nameHorizontal.addEventListener('click', () => {
   if (aboutOpen) closeAbout();
 });
 
